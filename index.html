@@ -527,6 +527,9 @@
     <div id="printArea"></div>
 
     <script>
+        // URL WEB APP GOOGLE APPS SCRIPT ANDA (Ganti teks di dalam tanda petik ini)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1--xNcCNfK0hOzvzJQbO1LoPP4RDhJFwZRkajKLJuTC0ev8z30YQw3hyLQIg9jr0kEw/exec';
+
         // DNP RESOLUTION & PHYSICAL DIMENSIONS MAP
         const dnpDimensions = {
             '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
@@ -879,12 +882,12 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // 5. HIGH-SPEED QR CODE GENERATOR (IMGBB + WHATSAPP SHARE LINK INTEGRATION)
+        // 5. GOOGLE DRIVE UPLOAD & WHATSAPP QR GENERATOR
         function generateOnlineQRCode() {
-            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah & Buat WA Link...</span>';
+            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah ke Drive...</span>';
             qrStatus.textContent = "MEMBUAT WA LINK...";
 
-            // Optimize & Kompres canvas khusus HP (~100KB JPEG)
+            // Kompres canvas khusus web (~100KB JPEG)
             const webCanvas = document.createElement('canvas');
             const targetW = 800;
             const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
@@ -894,43 +897,40 @@
             const webCtx = webCanvas.getContext('2d');
             webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
 
-            webCanvas.toBlob(async (blob) => {
-                try {
-                    const formData = new FormData();
-                    formData.append('image', blob);
+            const base64Image = webCanvas.toDataURL('image/jpeg', 0.8);
 
-                    // Mengunggah ke ImgBB API (Bersih, Tanpa Iklan & Redirect Shopee)
-                    const apiKey = 'c20c451684c98032e54e4df94ef4f1d4';
-                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-                        method: 'POST',
-                        body: formData
+            // Kirim foto & nama event ke Google Apps Script
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    image: base64Image,
+                    eventName: eventTitle ? eventTitle.value : "Event Photobooth"
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Membuat tautan pembuka WhatsApp
+                    const waText = encodeURIComponent(`Halo! Ini hasil foto Photobooth Sekolah Athalia:\n\n${data.url}`);
+                    const waShareUrl = `https://api.whatsapp.com/send?text=${waText}`;
+
+                    qrcodeContainer.innerHTML = '';
+                    new QRCode(qrcodeContainer, {
+                        text: waShareUrl,
+                        width: 120,
+                        height: 120,
+                        correctLevel: QRCode.CorrectLevel.L
                     });
-
-                    const json = await res.json();
-                    if (json && json.data && json.data.url) {
-                        const directImageUrl = json.data.url;
-                        
-                        // Membuat tautan otomatis pembuka WhatsApp
-                        const waText = encodeURIComponent(`Halo! Ini hasil foto Photobooth Sekolah Athalia:\n\n${directImageUrl}`);
-                        const waShareUrl = `https://api.whatsapp.com/send?text=${waText}`;
-
-                        qrcodeContainer.innerHTML = '';
-                        new QRCode(qrcodeContainer, {
-                            text: waShareUrl,
-                            width: 120,
-                            height: 120,
-                            correctLevel: QRCode.CorrectLevel.L
-                        });
-                        qrStatus.textContent = "SCAN UNTUK KIRIM KE WA";
-                    } else {
-                        throw new Error("Gagal mengunggah gambar ke ImgBB");
-                    }
-                } catch (err) {
-                    console.error("Error QR Upload:", err);
-                    qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal Buat QR (Cek Internet)</span>';
-                    qrStatus.textContent = "QR ERROR";
+                    qrStatus.textContent = "SCAN UNTUK KIRIM KE WA";
+                } else {
+                    throw new Error(data.message);
                 }
-            }, 'image/jpeg', 0.8);
+            })
+            .catch(err => {
+                console.error("Upload Error:", err);
+                qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal Upload Drive</span>';
+                qrStatus.textContent = "QR ERROR";
+            });
         }
 
         // 6. DYNAMIC PRINT INJECTION
@@ -982,6 +982,6 @@
 
         // INIT ON LOAD
         window.addEventListener('load', initCameras);
-    </script>
+</script>
 </body>
 </html>
