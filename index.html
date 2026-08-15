@@ -409,7 +409,7 @@
     <!-- NAVBAR HEADER -->
     <header>
         <div class="brand">
-            <span>📷</span> KIOSK PHOTOBOOTH PRO Ver 7.3
+            <span>📷</span> KIOSK PHOTOBOOTH PRO Ver 7.4
         </div>
         <div class="controls-top">
             <select id="cameraSelect"><option>Memuat Kamera...</option></select>
@@ -884,51 +884,52 @@
 
         // 5. GOOGLE DRIVE UPLOAD & WHATSAPP QR GENERATOR
         function generateOnlineQRCode() {
-    qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah ke Drive...</span>';
-    qrStatus.textContent = "MEMBUAT WA LINK...";
+    // 1. Reset tampilan awal & indikator loading
+    qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:11px; font-weight:600;">Mengunggah foto...</span>';
+    qrStatus.textContent = "MEMBUAT QR CODE...";
 
+    // 2. Kompres gambar ke ukuran ringan (600px, JPEG 0.5) agar proses upload cepat
     const webCanvas = document.createElement('canvas');
-    const targetW = 800;
+    const targetW = 600;
     const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
     webCanvas.width = targetW;
     webCanvas.height = targetH;
     
     const webCtx = webCanvas.getContext('2d');
     webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
+    const base64Image = webCanvas.toDataURL('image/jpeg', 0.5);
 
-    const base64Image = webCanvas.toDataURL('image/jpeg', 0.8);
-
+    // 3. Kirim data ke Apps Script
     fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ 
             image: base64Image,
-            eventName: eventTitle ? eventTitle.value : "Event Photobooth"
+            eventName: (typeof eventTitle !== 'undefined' && eventTitle.value) ? eventTitle.value : "Event Photobooth"
         })
     })
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success') {
-            const waText = encodeURIComponent(`Halo! Ini hasil foto Photobooth Sekolah Athalia:\n\n${data.url}`);
-            const waShareUrl = `https://api.whatsapp.com/send?text=${waText}`;
-
+            // BERSIHKAN CONTAINER (Penting agar foto ke-2 tidak error)
             qrcodeContainer.innerHTML = '';
+
+            // Buat QR Code Sederhana (Hanya berisi URL Drive langsung)
             new QRCode(qrcodeContainer, {
-                text: waShareUrl,
-                width: 120,
-                height: 120,
-                correctLevel: QRCode.CorrectLevel.L
+                text: data.url,
+                width: 130,
+                height: 130,
+                correctLevel: QRCode.CorrectLevel.M
             });
-            qrStatus.textContent = "SCAN UNTUK KIRIM KE WA";
+            
+            qrStatus.textContent = "SCAN UNTUK BUKA FOTO";
         } else {
-            throw new Error(data.message || "Gagal mengunggah gambar");
+            throw new Error(data.message || "Gagal membuat QR");
         }
     })
     .catch(err => {
-        console.error("Upload Error:", err);
-        qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal Upload Drive</span>';
+        console.error("QR Error:", err);
+        qrcodeContainer.innerHTML = `<span style="color:#ef4444; font-size:10px; font-weight:600; text-align:center; display:block;">Gagal Upload</span>`;
         qrStatus.textContent = "QR ERROR";
     });
 }
