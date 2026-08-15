@@ -409,7 +409,7 @@
     <!-- NAVBAR HEADER -->
     <header>
         <div class="brand">
-            <span>📷</span> KIOSK PHOTOBOOTH PRO Ver 7.0
+            <span>📷</span> KIOSK PHOTOBOOTH PRO
         </div>
         <div class="controls-top">
             <select id="cameraSelect"><option>Memuat Kamera...</option></select>
@@ -879,7 +879,7 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // 5. HIGH-SPEED QR CODE GENERATOR (CORS-ENABLED + DIRECT RAW LINK)
+        // 5. HIGH-SPEED QR CODE GENERATOR (PIXELDRAIN API - NO ADS & CLEAN RAW IMAGE)
         function generateOnlineQRCode() {
             qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah QR...</span>';
             qrStatus.textContent = "MEMBUAT QR CODE...";
@@ -899,16 +899,16 @@
                     const formData = new FormData();
                     formData.append('file', blob, `photobooth-${Date.now()}.jpg`);
 
-                    // Menggunakan TmpFiles API (Mendukung CORS penuh)
-                    const res = await fetch('https://tmpfiles.org/api/v1/upload', {
+                    // Mengunggah ke Pixeldrain API (Mendukung CORS & Tanpa Skrip Iklan/Shopee)
+                    const res = await fetch('https://pixeldrain.com/api/file', {
                         method: 'POST',
                         body: formData
                     });
 
                     const json = await res.json();
-                    if (json && json.status === 'success' && json.data && json.data.url) {
-                        // Mengubah URL ke Direct RAW Link (`/dl/`) agar terbuka langsung full-screen di HP
-                        const directRawUrl = json.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                    if (json && json.success && json.id) {
+                        // Tautan langsung (RAW image bytes) tanpa halaman web pembungkus
+                        const directRawUrl = `https://pixeldrain.com/api/file/${json.id}`;
 
                         qrcodeContainer.innerHTML = '';
                         new QRCode(qrcodeContainer, {
@@ -919,14 +919,14 @@
                         });
                         qrStatus.textContent = "SCAN QR UNTUK UNDUH";
                     } else {
-                        throw new Error("Gagal mengunggah berkas");
+                        throw new Error("Gagal mengunggah ke Pixeldrain");
                     }
                 } catch (err) {
                     console.error("Error QR Upload:", err);
                     qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal buat QR (Cek Internet)</span>';
                     qrStatus.textContent = "QR ERROR";
                 }
-            }, 'image/jpeg', 0.7);
+            }, 'image/jpeg', 0.75);
         }
 
         // 6. DYNAMIC PRINT INJECTION
