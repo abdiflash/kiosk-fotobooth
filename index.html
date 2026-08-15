@@ -884,55 +884,54 @@
 
         // 5. GOOGLE DRIVE UPLOAD & WHATSAPP QR GENERATOR
         function generateOnlineQRCode() {
-            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah ke Drive...</span>';
-            qrStatus.textContent = "MEMBUAT WA LINK...";
+    qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah ke Drive...</span>';
+    qrStatus.textContent = "MEMBUAT WA LINK...";
 
-            // Kompres canvas khusus web (~100KB JPEG)
-            const webCanvas = document.createElement('canvas');
-            const targetW = 800;
-            const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
-            webCanvas.width = targetW;
-            webCanvas.height = targetH;
-            
-            const webCtx = webCanvas.getContext('2d');
-            webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
+    const webCanvas = document.createElement('canvas');
+    const targetW = 800;
+    const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
+    webCanvas.width = targetW;
+    webCanvas.height = targetH;
+    
+    const webCtx = webCanvas.getContext('2d');
+    webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
 
-            const base64Image = webCanvas.toDataURL('image/jpeg', 0.8);
+    const base64Image = webCanvas.toDataURL('image/jpeg', 0.8);
 
-            // Kirim foto & nama event ke Google Apps Script
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    image: base64Image,
-                    eventName: eventTitle ? eventTitle.value : "Event Photobooth"
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Membuat tautan pembuka WhatsApp
-                    const waText = encodeURIComponent(`Halo! Ini hasil foto Photobooth Sekolah Athalia:\n\n${data.url}`);
-                    const waShareUrl = `https://api.whatsapp.com/send?text=${waText}`;
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({ 
+            image: base64Image,
+            eventName: eventTitle ? eventTitle.value : "Event Photobooth"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const waText = encodeURIComponent(`Halo! Ini hasil foto Photobooth Sekolah Athalia:\n\n${data.url}`);
+            const waShareUrl = `https://api.whatsapp.com/send?text=${waText}`;
 
-                    qrcodeContainer.innerHTML = '';
-                    new QRCode(qrcodeContainer, {
-                        text: waShareUrl,
-                        width: 120,
-                        height: 120,
-                        correctLevel: QRCode.CorrectLevel.L
-                    });
-                    qrStatus.textContent = "SCAN UNTUK KIRIM KE WA";
-                } else {
-                    throw new Error(data.message);
-                }
-            })
-            .catch(err => {
-                console.error("Upload Error:", err);
-                qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal Upload Drive</span>';
-                qrStatus.textContent = "QR ERROR";
+            qrcodeContainer.innerHTML = '';
+            new QRCode(qrcodeContainer, {
+                text: waShareUrl,
+                width: 120,
+                height: 120,
+                correctLevel: QRCode.CorrectLevel.L
             });
+            qrStatus.textContent = "SCAN UNTUK KIRIM KE WA";
+        } else {
+            throw new Error(data.message || "Gagal mengunggah gambar");
         }
-
+    })
+    .catch(err => {
+        console.error("Upload Error:", err);
+        qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal Upload Drive</span>';
+        qrStatus.textContent = "QR ERROR";
+    });
+}
         // 6. DYNAMIC PRINT INJECTION
         printBtn.addEventListener('click', () => {
             const printArea = document.getElementById('printArea');
