@@ -409,7 +409,7 @@
     <!-- NAVBAR HEADER -->
     <header>
         <div class="brand">
-            <span>📷</span> KIOSK PHOTOBOOTH PRO
+            <span>📷</span> KIOSK PHOTOBOOTH PRO Ver 7.0
         </div>
         <div class="controls-top">
             <select id="cameraSelect"><option>Memuat Kamera...</option></select>
@@ -576,10 +576,8 @@
         function updateLivePreviewLayout() {
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
 
-            // Adjust aspect ratio of camera preview box
             cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
 
-            // Adjust visual safe zone guide based on slider margin
             const marginPx = parseInt(safeAreaMargin.value) || 0;
             const percentX = (marginPx / config.w) * 100;
             const percentY = (marginPx / config.h) * 100;
@@ -881,12 +879,12 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // 5. HIGH-SPEED QR CODE GENERATOR (OPTIMIZED FOR MOBILE DIRECT VIEW)
+        // 5. HIGH-SPEED QR CODE GENERATOR (CORS-ENABLED + DIRECT RAW LINK)
         function generateOnlineQRCode() {
             qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah QR...</span>';
             qrStatus.textContent = "MEMBUAT QR CODE...";
 
-            // Scale-down canvas khusus untuk tampilan HP (Maksimal 800px lebar, file ~100KB)
+            // Optimize & Kompres canvas khusus HP (~100KB JPEG)
             const webCanvas = document.createElement('canvas');
             const targetW = 800;
             const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
@@ -899,28 +897,29 @@
             webCanvas.toBlob(async (blob) => {
                 try {
                     const formData = new FormData();
-                    formData.append('reqtype', 'fileupload');
-                    formData.append('time', '1h');
-                    formData.append('fileToUpload', blob, `photobooth-${Date.now()}.jpg`);
+                    formData.append('file', blob, `photobooth-${Date.now()}.jpg`);
 
-                    // Upload via Litterbox (Direct RAW .jpg file link without ads/interstitial page)
-                    const res = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+                    // Menggunakan TmpFiles API (Mendukung CORS penuh)
+                    const res = await fetch('https://tmpfiles.org/api/v1/upload', {
                         method: 'POST',
                         body: formData
                     });
 
-                    const rawUrl = (await res.text()).trim();
-                    if (rawUrl && rawUrl.startsWith('http')) {
+                    const json = await res.json();
+                    if (json && json.status === 'success' && json.data && json.data.url) {
+                        // Mengubah URL ke Direct RAW Link (`/dl/`) agar terbuka langsung full-screen di HP
+                        const directRawUrl = json.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+
                         qrcodeContainer.innerHTML = '';
                         new QRCode(qrcodeContainer, {
-                            text: rawUrl,
+                            text: directRawUrl,
                             width: 120,
                             height: 120,
                             correctLevel: QRCode.CorrectLevel.L
                         });
                         qrStatus.textContent = "SCAN QR UNTUK UNDUH";
                     } else {
-                        throw new Error("Upload gagal");
+                        throw new Error("Gagal mengunggah berkas");
                     }
                 } catch (err) {
                     console.error("Error QR Upload:", err);
@@ -930,13 +929,12 @@
             }, 'image/jpeg', 0.7);
         }
 
-        // 6. DYNAMIC PRINT INJECTION FIX
+        // 6. DYNAMIC PRINT INJECTION
         printBtn.addEventListener('click', () => {
             const printArea = document.getElementById('printArea');
             const dynamicPrintStyle = document.getElementById('dynamicPrintStyle');
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
 
-            // Inject exact physical size into browser @page CSS rule
             dynamicPrintStyle.innerHTML = `@page { size: ${config.printSize}; margin: 0; }`;
 
             printArea.innerHTML = '';
@@ -973,7 +971,6 @@
             });
         });
 
-        // RESET ONLY SESSION PHOTOS
         closeModalBtn.addEventListener('click', () => {
             capturedPhotos = [];
             resultModal.classList.remove('active');
