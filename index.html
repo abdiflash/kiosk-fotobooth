@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kiosk Photobooth Pro (DNP Ready)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CDN Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <!-- DYNAMIC PRINT MEDIA STYLING CONTAINER -->
+    <style id="dynamicPrintStyle">
+        @page {
+            size: 5in 7in;
+            margin: 0;
+        }
+    </style>
+
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --panel-bg: rgba(23, 30, 48, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --accent-hover: #4f46e5;
+            --text-title: #f8fafc;
+            --text-body: #94a3b8;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-title);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--panel-border);
+            z-index: 10;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .controls-top {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, input[type="text"], input[type="file"], input[type="range"] {
+            background: #1e293b;
+            color: var(--text-title);
+            border: 1px solid var(--panel-border);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        button {
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid var(--panel-border);
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        button:hover {
+            background: #334155;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border: none;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+
+        /* MAIN APPS LAYOUT */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* CONTROL SIDEBAR */
+        .sidebar {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            height: fit-content;
+        }
+
+        .setting-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setting-card label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-body);
+            font-weight: 700;
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 10px;
+        }
+
+        .color-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s;
+        }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+
+        /* LIVE CAMERA STAGE & PREVIEW CONTAINER */
+        .stage-container {
+            background: #000;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--panel-border);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            min-height: 600px;
+            padding: 20px;
+        }
+
+        .camera-wrapper {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #090d16;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-height: 70vh;
+            max-width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        video.mirrored {
+            transform: scaleX(-1);
+        }
+
+        /* LIVE OVERLAY & SAFE AREA GUIDES */
+        .live-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        .safe-zone-guide {
+            position: absolute;
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+            z-index: 5;
+            transition: all 0.2s ease;
+        }
+
+        /* FLASH & COUNTDOWN */
+        .flash-overlay {
+            position: absolute;
+            inset: 0;
+            background: #ffffff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+        .flash-overlay.active {
+            animation: flashAnimation 0.35s ease-out;
+        }
+        @keyframes flashAnimation {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .countdown-overlay {
+            position: absolute;
+            font-size: 11rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            z-index: 40;
+            display: none;
+            animation: pulseText 0.8s infinite alternate;
+        }
+        @keyframes pulseText {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .capture-bar {
+            position: absolute;
+            bottom: 30px;
+            z-index: 30;
+        }
+
+        .btn-capture {
+            padding: 16px 48px;
+            font-size: 1.25rem;
+            border-radius: 100px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* MODAL PREVIEW & DOWNLOAD */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 7, 13, 0.85);
+            backdrop-filter: blur(16px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+        .modal.active { display: flex; }
+
+        .modal-card {
+            background: #111827;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            display: flex;
+            gap: 28px;
+            max-width: 1150px;
+            width: 100%;
+            max-height: 90vh;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .preview-box {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #030712;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        canvas {
+            max-height: 70vh;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-sidebar {
+            width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-sidebar h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .qr-card {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-height: 170px;
+            justify-content: center;
+        }
+
+        .qr-card p {
+            color: #0f172a;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* PRINT MEDIA STYLING */
+        #printArea {
+            display: none;
+        }
+
+        @media print {
+            body > *:not(#printArea) { display: none !important; }
+            #printArea {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #printArea img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
+            }
+        }
+
+        @media (max-width: 960px) {
+            main { grid-template-columns: 1fr; }
+            .modal-card { flex-direction: column; overflow-y: auto; }
+            .modal-sidebar { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR HEADER -->
+    <header>
+        <div class="brand">
+            <span>📷</span> KIOSK PHOTOBOOTH PRO
+        </div>
+        <div class="controls-top">
+            <select id="cameraSelect"><option>Memuat Kamera...</option></select>
+            <button id="mirrorBtn">↔️ Mirror</button>
+            <button id="fullscreenBtn">⛶ Fullscreen</button>
+        </div>
+    </header>
+
+    <!-- MAIN INTERFACE -->
+    <main>
+        <!-- SIDEBAR CONTROLS -->
+        <aside class="sidebar">
+            <div class="setting-card">
+                <label>Ukuran Cetak (Printer DNP Standard)</label>
+                <select id="dnpSizeSelect">
+                    <option value="5r_p" selected>5R Portrait (5x7" • 1500x2100 px)</option>
+                    <option value="5r_l">5R Landscape (7x5" • 2100x1500 px)</option>
+                    <option value="4r_p">4R Portrait (4x6" • 1200x1800 px)</option>
+                    <option value="4r_l">4R Landscape (6x4" • 1800x1200 px)</option>
+                    <option value="strip_2x6">2x6 Strip (DNP Auto-Cut • 2x6")</option>
+                    <option value="6r_p">6R Portrait (6x8" • 1800x2400 px)</option>
+                    <option value="6r_l">6R Landscape (8x6" • 2400x1800 px)</option>
+                </select>
+            </div>
+
+            <div class="setting-card">
+                <label>Jumlah Pose / Foto</label>
+                <select id="poseFormat">
+                    <option value="1" selected>1 Pose (Foto Single)</option>
+                    <option value="3">3 Poses (Classic Strip)</option>
+                    <option value="4">4 Poses (Grid 2x2)</option>
+                </select>
+            </div>
+
+            <div class="setting-card">
+                <label>Margin / Safe Area Foto (px)</label>
+                <input type="range" id="safeAreaMargin" min="0" max="150" value="40">
+            </div>
+
+            <div class="setting-card">
+                <label>Warna Background Strip</label>
+                <div class="color-presets">
+                    <button class="color-btn active" data-color="#ffffff" style="background: #ffffff;"></button>
+                    <button class="color-btn" data-color="#090d16" style="background: #090d16;"></button>
+                    <button class="color-btn" data-color="#f472b6" style="background: #f472b6;"></button>
+                    <button class="color-btn" data-color="#38bdf8" style="background: #38bdf8;"></button>
+                    <button class="color-btn" data-color="gradient" style="background: linear-gradient(135deg, #6366f1, #a855f7);"></button>
+                </div>
+            </div>
+
+            <div class="setting-card">
+                <label>Frame Overlay (PNG Transparan)</label>
+                <input type="file" id="overlayInput" accept="image/png">
+            </div>
+
+            <div class="setting-card">
+                <label>Teks Event / Header (Opsional)</label>
+                <input type="text" id="eventTitle" placeholder="Kosongkan jika sudah ada di Frame PNG">
+                <input type="text" id="eventSub" placeholder="Sub-judul (Opsional)" style="margin-top: 4px;">
+            </div>
+
+            <div class="setting-card">
+                <label>Efek Filter Visual</label>
+                <select id="filterSelect">
+                    <option value="none">Normal (Original)</option>
+                    <option value="grayscale(100%)">B&W (Hitam Putih)</option>
+                    <option value="sepia(70%)">Vintage Sepia</option>
+                    <option value="brightness(110%) contrast(108%)">Bright & Soft</option>
+                </select>
+            </div>
+        </aside>
+
+        <!-- CAMERA DISPLAY STAGE -->
+        <section class="stage-container">
+            <div class="flash-overlay" id="flashElem"></div>
+            <div class="countdown-overlay" id="countdownElem">3</div>
+            
+            <div class="camera-wrapper" id="cameraWrapper">
+                <video id="webcam" autoplay playsinline class="mirrored"></video>
+                <div class="safe-zone-guide" id="safeZoneGuide"></div>
+                <img id="liveOverlay" class="live-overlay" alt="Live PNG Frame Overlay">
+            </div>
+
+            <div class="capture-bar">
+                <button class="btn-primary btn-capture" id="startBtn">📸 AMBIL FOTO</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- RESULT MODAL -->
+    <div class="modal" id="resultModal">
+        <div class="modal-card">
+            <div class="preview-box">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+            <div class="modal-sidebar">
+                <h3>Hasil Foto Selesai!</h3>
+                <p style="color: var(--text-body); font-size: 0.875rem;">Silakan cetak atau unduh hasil foto Anda di bawah ini.</p>
+                
+                <button class="btn-primary" id="printBtn" style="padding: 14px;">🖨️ Cetak Langsung (Print)</button>
+                <button id="downloadPngBtn">💾 Unduh PNG Strip</button>
+                <button id="downloadZipBtn">📦 Unduh ZIP (Semua Foto)</button>
+                
+                <div class="qr-card">
+                    <p id="qrStatus">MENYIAPKAN QR...</p>
+                    <div id="qrcode"></div>
+                </div>
+
+                <button id="closeModalBtn" style="background: #dc2626; margin-top: auto;">❌ Selesai & Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT CONTAINER -->
+    <div id="printArea"></div>
+
+    <script>
+        // DNP RESOLUTION & PHYSICAL DIMENSIONS MAP
+        const dnpDimensions = {
+            '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
+            '5r_l': { w: 2100, h: 1500, isPortrait: false, printSize: '7in 5in' },
+            '4r_p': { w: 1200, h: 1800, isPortrait: true, printSize: '4in 6in' },
+            '4r_l': { w: 1800, h: 1200, isPortrait: false, printSize: '6in 4in' },
+            'strip_2x6': { w: 600, h: 1800, isPortrait: true, printSize: '2in 6in' },
+            '6r_p': { w: 1800, h: 2400, isPortrait: true, printSize: '6in 8in' },
+            '6r_l': { w: 2400, h: 1800, isPortrait: false, printSize: '8in 6in' }
+        };
+
+        // APP STATES
+        let currentStream = null;
+        let isMirrored = true;
+        let capturedPhotos = [];
+        let customOverlayImage = null;
+        let selectedBgColor = '#ffffff';
+
+        // DOM ELEMENTS
+        const webcam = document.getElementById('webcam');
+        const cameraWrapper = document.getElementById('cameraWrapper');
+        const liveOverlay = document.getElementById('liveOverlay');
+        const safeZoneGuide = document.getElementById('safeZoneGuide');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const mirrorBtn = document.getElementById('mirrorBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const startBtn = document.getElementById('startBtn');
+        const flashElem = document.getElementById('flashElem');
+        const countdownElem = document.getElementById('countdownElem');
+        const poseFormat = document.getElementById('poseFormat');
+        const dnpSizeSelect = document.getElementById('dnpSizeSelect');
+        const safeAreaMargin = document.getElementById('safeAreaMargin');
+        const filterSelect = document.getElementById('filterSelect');
+        const overlayInput = document.getElementById('overlayInput');
+        const eventTitle = document.getElementById('eventTitle');
+        const eventSub = document.getElementById('eventSub');
+        const resultModal = document.getElementById('resultModal');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const printBtn = document.getElementById('printBtn');
+        const downloadPngBtn = document.getElementById('downloadPngBtn');
+        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const qrcodeContainer = document.getElementById('qrcode');
+        const qrStatus = document.getElementById('qrStatus');
+
+        // UPDATE LIVE PREVIEW ASPECT RATIO & SAFE ZONE GUIDE
+        function updateLivePreviewLayout() {
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+
+            // Adjust aspect ratio of camera preview box
+            cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
+
+            // Adjust visual safe zone guide based on slider margin
+            const marginPx = parseInt(safeAreaMargin.value) || 0;
+            const percentX = (marginPx / config.w) * 100;
+            const percentY = (marginPx / config.h) * 100;
+
+            safeZoneGuide.style.top = `${percentY}%`;
+            safeZoneGuide.style.bottom = `${percentY}%`;
+            safeZoneGuide.style.left = `${percentX}%`;
+            safeZoneGuide.style.right = `${percentX}%`;
+
+            saveSettings();
+        }
+
+        // LOCAL STORAGE STORAGE & RESTORE LOGIC
+        function saveSettings() {
+            localStorage.setItem('pb_eventTitle', eventTitle.value);
+            localStorage.setItem('pb_eventSub', eventSub.value);
+            localStorage.setItem('pb_dnpSize', dnpSizeSelect.value);
+            localStorage.setItem('pb_poseFormat', poseFormat.value);
+            localStorage.setItem('pb_safeMargin', safeAreaMargin.value);
+            localStorage.setItem('pb_bgColor', selectedBgColor);
+            localStorage.setItem('pb_filter', filterSelect.value);
+        }
+
+        function loadSettings() {
+            if (localStorage.getItem('pb_eventTitle') !== null) eventTitle.value = localStorage.getItem('pb_eventTitle');
+            if (localStorage.getItem('pb_eventSub') !== null) eventSub.value = localStorage.getItem('pb_eventSub');
+            if (localStorage.getItem('pb_dnpSize')) dnpSizeSelect.value = localStorage.getItem('pb_dnpSize');
+            if (localStorage.getItem('pb_poseFormat')) poseFormat.value = localStorage.getItem('pb_poseFormat');
+            if (localStorage.getItem('pb_safeMargin')) safeAreaMargin.value = localStorage.getItem('pb_safeMargin');
+            if (localStorage.getItem('pb_filter')) filterSelect.value = localStorage.getItem('pb_filter');
+            if (localStorage.getItem('pb_bgColor')) {
+                selectedBgColor = localStorage.getItem('pb_bgColor');
+                document.querySelectorAll('.color-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.color === selectedBgColor);
+                });
+            }
+            updateLivePreviewLayout();
+        }
+
+        [eventTitle, eventSub, dnpSizeSelect, poseFormat, safeAreaMargin, filterSelect].forEach(elem => {
+            elem.addEventListener('input', updateLivePreviewLayout);
+            elem.addEventListener('change', updateLivePreviewLayout);
+        });
+
+        // 1. CAMERA ENGINE
+        async function initCameras() {
+            loadSettings();
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                
+                cameraSelect.innerHTML = '';
+                videoDevices.forEach((device, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = device.deviceId;
+                    opt.text = device.label || `Kamera ${idx + 1}`;
+                    cameraSelect.appendChild(opt);
+                });
+
+                if (videoDevices.length > 0) startCamera(videoDevices[0].deviceId);
+            } catch (err) {
+                alert('Tidak dapat mendeteksi kamera: ' + err.message);
+            }
+        }
+
+        async function startCamera(deviceId) {
+            if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                });
+                webcam.srcObject = currentStream;
+            } catch (err) {
+                console.error("Gagal membuka kamera:", err);
+            }
+        }
+
+        cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
+        mirrorBtn.addEventListener('click', () => {
+            isMirrored = !isMirrored;
+            webcam.classList.toggle('mirrored', isMirrored);
+        });
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        });
+
+        // 2. CONFIGURATION HANDLERS
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedBgColor = btn.dataset.color;
+                saveSettings();
+            });
+        });
+
+        // OVERLAY PNG REAL-TIME PREVIEW
+        overlayInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const img = new Image();
+                    img.onload = () => { 
+                        customOverlayImage = img;
+                        liveOverlay.src = evt.target.result;
+                        liveOverlay.style.display = 'block';
+                    };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 3. CAPTURE LOGIC
+        startBtn.addEventListener('click', async () => {
+            capturedPhotos = [];
+            startBtn.style.display = 'none';
+            const totalPoses = parseInt(poseFormat.value);
+
+            for (let i = 0; i < totalPoses; i++) {
+                await runCountdown(3);
+                triggerFlash();
+                captureFrame();
+                if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1500));
+            }
+
+            startBtn.style.display = 'inline-flex';
+            buildPhotostrip();
+        });
+
+        function runCountdown(sec) {
+            return new Promise((resolve) => {
+                countdownElem.style.display = 'block';
+                let c = sec;
+                countdownElem.textContent = c;
+
+                const t = setInterval(() => {
+                    c--;
+                    if (c > 0) countdownElem.textContent = c;
+                    else {
+                        clearInterval(t);
+                        countdownElem.style.display = 'none';
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        function triggerFlash() {
+            flashElem.classList.add('active');
+            setTimeout(() => flashElem.classList.remove('active'), 350);
+        }
+
+        function captureFrame() {
+            const canvas = document.createElement('canvas');
+            canvas.width = webcam.videoWidth || 1280;
+            canvas.height = webcam.videoHeight || 720;
+            const ctx = canvas.getContext('2d');
+
+            if (isMirrored) {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+
+            ctx.filter = filterSelect.value;
+            ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+            capturedPhotos.push(canvas.toDataURL('image/png'));
+        }
+
+        // 4. CANVAS RENDER ENGINE
+        function buildPhotostrip() {
+            const canvas = outputCanvas;
+            const ctx = canvas.getContext('2d');
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+
+            canvas.width = config.w;
+            canvas.height = config.h;
+
+            if (selectedBgColor === 'gradient') {
+                const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grad.addColorStop(0, '#6366f1');
+                grad.addColorStop(1, '#a855f7');
+                ctx.fillStyle = grad;
+            } else {
+                ctx.fillStyle = selectedBgColor;
+            }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let loadedCount = 0;
+            const loadedImages = [];
+            capturedPhotos.forEach((src, idx) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedImages[idx] = img;
+                    loadedCount++;
+                    if (loadedCount === capturedPhotos.length) {
+                        drawLayout(ctx, canvas, loadedImages, config.isPortrait);
+                    }
+                };
+                img.src = src;
+            });
+        }
+
+        function drawLayout(ctx, canvas, images, isPortrait) {
+            const count = images.length;
+            const margin = parseInt(safeAreaMargin.value) || 40;
+            const hasText = eventTitle.value.trim() !== '' || eventSub.value.trim() !== '';
+            const footerH = hasText ? Math.round(canvas.height * 0.10) : 0;
+
+            if (count === 1) {
+                const photoW = canvas.width - (margin * 2);
+                const photoH = canvas.height - footerH - (margin * 2);
+                drawCroppedImage(ctx, images[0], margin, margin, photoW, photoH);
+            } 
+            else if (count === 3) {
+                if (isPortrait) {
+                    const availH = canvas.height - footerH - (margin * 4);
+                    const photoH = availH / 3;
+                    const photoW = canvas.width - (margin * 2);
+
+                    images.forEach((img, i) => {
+                        drawCroppedImage(ctx, img, margin, margin + i * (photoH + margin), photoW, photoH);
+                    });
+                } else {
+                    const availW = canvas.width - (margin * 4);
+                    const photoW = availW / 3;
+                    const photoH = canvas.height - footerH - (margin * 2);
+
+                    images.forEach((img, i) => {
+                        drawCroppedImage(ctx, img, margin + i * (photoW + margin), margin, photoW, photoH);
+                    });
+                }
+            } 
+            else if (count === 4) {
+                const availH = canvas.height - footerH - (margin * 3);
+                const photoW = (canvas.width - (margin * 3)) / 2;
+                const photoH = availH / 2;
+
+                const pos = [
+                    { x: margin, y: margin },
+                    { x: margin * 2 + photoW, y: margin },
+                    { x: margin, y: margin * 2 + photoH },
+                    { x: margin * 2 + photoW, y: margin * 2 + photoH }
+                ];
+
+                images.forEach((img, i) => {
+                    drawCroppedImage(ctx, img, pos[i].x, pos[i].y, photoW, photoH);
+                });
+            }
+
+            if (customOverlayImage) {
+                ctx.drawImage(customOverlayImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            if (hasText) {
+                const footerY = canvas.height - (footerH / 2);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === '#f472b6' || selectedBgColor === '#38bdf8') ? '#090d16' : '#ffffff';
+
+                const titleFontSize = Math.round(canvas.width * 0.035);
+                const subFontSize = Math.round(canvas.width * 0.021);
+
+                if (eventTitle.value.trim() !== '') {
+                    ctx.font = `bold ${titleFontSize}px Plus Jakarta Sans`;
+                    ctx.fillText(eventTitle.value.toUpperCase(), canvas.width / 2, footerY - Math.round(titleFontSize * 0.2));
+                }
+
+                if (eventSub.value.trim() !== '') {
+                    ctx.font = `500 ${subFontSize}px Plus Jakarta Sans`;
+                    ctx.fillText(eventSub.value, canvas.width / 2, footerY + Math.round(subFontSize * 1.2));
+                }
+            }
+
+            generateOnlineQRCode();
+            resultModal.classList.add('active');
+        }
+
+        function drawCroppedImage(ctx, img, x, y, w, h) {
+            const imgAspect = img.width / img.height;
+            const targetAspect = w / h;
+            let sx, sy, sw, sh;
+
+            if (imgAspect > targetAspect) {
+                sh = img.height;
+                sw = img.height * targetAspect;
+                sx = (img.width - sw) / 2;
+                sy = 0;
+            } else {
+                sw = img.width;
+                sh = img.width / targetAspect;
+                sx = 0;
+                sy = (img.height - sh) / 2;
+            }
+
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+        }
+
+        // 5. HIGH-SPEED QR CODE GENERATOR (COMPRESSED JPEG UPLOAD)
+        function generateOnlineQRCode() {
+            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah QR...</span>';
+            qrStatus.textContent = "MEMBUAT QR CODE...";
+
+            outputCanvas.toBlob(async (blob) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', blob, `photobooth-${Date.now()}.jpg`);
+
+                    const res = await fetch('https://tmpfiles.org/api/v1/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const json = await res.json();
+                    if (json && json.status === 'success' && json.data.url) {
+                        const directDownloadUrl = json.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                        
+                        qrcodeContainer.innerHTML = '';
+                        new QRCode(qrcodeContainer, {
+                            text: directDownloadUrl,
+                            width: 120,
+                            height: 120,
+                            correctLevel: QRCode.CorrectLevel.L
+                        });
+                        qrStatus.textContent = "SCAN QR UNTUK UNDUH";
+                    } else {
+                        throw new Error("Upload gagal");
+                    }
+                } catch (err) {
+                    console.error("Error QR Upload:", err);
+                    qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal buat QR (Cek Internet)</span>';
+                    qrStatus.textContent = "QR ERROR";
+                }
+            }, 'image/jpeg', 0.6);
+        }
+
+        // 6. DYNAMIC PRINT INJECTION FIX
+        printBtn.addEventListener('click', () => {
+            const printArea = document.getElementById('printArea');
+            const dynamicPrintStyle = document.getElementById('dynamicPrintStyle');
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+
+            // Inject exact physical size into browser @page CSS rule
+            dynamicPrintStyle.innerHTML = `@page { size: ${config.printSize}; margin: 0; }`;
+
+            printArea.innerHTML = '';
+            const img = new Image();
+            img.onload = () => {
+                printArea.appendChild(img);
+                setTimeout(() => {
+                    window.print();
+                }, 300);
+            };
+            img.src = outputCanvas.toDataURL('image/png');
+        });
+
+        // 7. DOWNLOAD ACTIONS
+        downloadPngBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `photobooth-${Date.now()}.png`;
+            link.href = outputCanvas.toDataURL();
+            link.click();
+        });
+
+        downloadZipBtn.addEventListener('click', () => {
+            const zip = new JSZip();
+            const folder = zip.folder("photobooth_session");
+
+            folder.file("photostrip_full.png", outputCanvas.toDataURL().split(',')[1], { base64: true });
+
+            capturedPhotos.forEach((photo, idx) => {
+                folder.file(`pose_${idx + 1}.png`, photo.split(',')[1], { base64: true });
+            });
+
+            zip.generateAsync({ type: "blob" }).then((blob) => {
+                saveAs(blob, `photobooth-session-${Date.now()}.zip`);
+            });
+        });
+
+        // RESET ONLY SESSION PHOTOS
+        closeModalBtn.addEventListener('click', () => {
+            capturedPhotos = [];
+            resultModal.classList.remove('active');
+        });
+
+        // INIT ON LOAD
+        window.addEventListener('load', initCameras);
+    </script>
+</body>
+</html>
