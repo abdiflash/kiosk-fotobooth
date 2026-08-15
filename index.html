@@ -881,28 +881,39 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // 5. HIGH-SPEED QR CODE GENERATOR (COMPRESSED JPEG UPLOAD)
+        // 5. HIGH-SPEED QR CODE GENERATOR (OPTIMIZED FOR MOBILE DIRECT VIEW)
         function generateOnlineQRCode() {
             qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah QR...</span>';
             qrStatus.textContent = "MEMBUAT QR CODE...";
 
-            outputCanvas.toBlob(async (blob) => {
+            // Scale-down canvas khusus untuk tampilan HP (Maksimal 800px lebar, file ~100KB)
+            const webCanvas = document.createElement('canvas');
+            const targetW = 800;
+            const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
+            webCanvas.width = targetW;
+            webCanvas.height = targetH;
+            
+            const webCtx = webCanvas.getContext('2d');
+            webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
+
+            webCanvas.toBlob(async (blob) => {
                 try {
                     const formData = new FormData();
-                    formData.append('file', blob, `photobooth-${Date.now()}.jpg`);
+                    formData.append('reqtype', 'fileupload');
+                    formData.append('time', '1h');
+                    formData.append('fileToUpload', blob, `photobooth-${Date.now()}.jpg`);
 
-                    const res = await fetch('https://tmpfiles.org/api/v1/upload', {
+                    // Upload via Litterbox (Direct RAW .jpg file link without ads/interstitial page)
+                    const res = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
                         method: 'POST',
                         body: formData
                     });
 
-                    const json = await res.json();
-                    if (json && json.status === 'success' && json.data.url) {
-                        const directDownloadUrl = json.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-                        
+                    const rawUrl = (await res.text()).trim();
+                    if (rawUrl && rawUrl.startsWith('http')) {
                         qrcodeContainer.innerHTML = '';
                         new QRCode(qrcodeContainer, {
-                            text: directDownloadUrl,
+                            text: rawUrl,
                             width: 120,
                             height: 120,
                             correctLevel: QRCode.CorrectLevel.L
@@ -916,7 +927,7 @@
                     qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal buat QR (Cek Internet)</span>';
                     qrStatus.textContent = "QR ERROR";
                 }
-            }, 'image/jpeg', 0.6);
+            }, 'image/jpeg', 0.7);
         }
 
         // 6. DYNAMIC PRINT INJECTION FIX
