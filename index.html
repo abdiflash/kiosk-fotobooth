@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk Photobooth Pro (DNP Ready)</title>
+    <title>Kiosk Photobooth Pro (WhatsApp Ready)</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -409,7 +409,7 @@
     <!-- NAVBAR HEADER -->
     <header>
         <div class="brand">
-            <span>📷</span> KIOSK PHOTOBOOTH PRO
+            <span>📷</span> KIOSK PHOTOBOOTH PRO Ver 7.1
         </div>
         <div class="controls-top">
             <select id="cameraSelect"><option>Memuat Kamera...</option></select>
@@ -514,7 +514,7 @@
                 <button id="downloadZipBtn">📦 Unduh ZIP (Semua Foto)</button>
                 
                 <div class="qr-card">
-                    <p id="qrStatus">MENYIAPKAN QR...</p>
+                    <p id="qrStatus">MENYIAPKAN QR WA...</p>
                     <div id="qrcode"></div>
                 </div>
 
@@ -879,10 +879,10 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // 5. HIGH-SPEED QR CODE GENERATOR (PIXELDRAIN API - NO ADS & CLEAN RAW IMAGE)
+        // 5. HIGH-SPEED QR CODE GENERATOR (IMGBB + WHATSAPP SHARE LINK INTEGRATION)
         function generateOnlineQRCode() {
-            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah QR...</span>';
-            qrStatus.textContent = "MEMBUAT QR CODE...";
+            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:12px; font-weight:600;">Mengunggah & Buat WA Link...</span>';
+            qrStatus.textContent = "MEMBUAT WA LINK...";
 
             // Optimize & Kompres canvas khusus HP (~100KB JPEG)
             const webCanvas = document.createElement('canvas');
@@ -897,36 +897,40 @@
             webCanvas.toBlob(async (blob) => {
                 try {
                     const formData = new FormData();
-                    formData.append('file', blob, `photobooth-${Date.now()}.jpg`);
+                    formData.append('image', blob);
 
-                    // Mengunggah ke Pixeldrain API (Mendukung CORS & Tanpa Skrip Iklan/Shopee)
-                    const res = await fetch('https://pixeldrain.com/api/file', {
+                    // Mengunggah ke ImgBB API (Bersih, Tanpa Iklan & Redirect Shopee)
+                    const apiKey = 'c20c451684c98032e54e4df94ef4f1d4';
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
                         method: 'POST',
                         body: formData
                     });
 
                     const json = await res.json();
-                    if (json && json.success && json.id) {
-                        // Tautan langsung (RAW image bytes) tanpa halaman web pembungkus
-                        const directRawUrl = `https://pixeldrain.com/api/file/${json.id}`;
+                    if (json && json.data && json.data.url) {
+                        const directImageUrl = json.data.url;
+                        
+                        // Membuat tautan otomatis pembuka WhatsApp
+                        const waText = encodeURIComponent(`Halo! Ini hasil foto Photobooth Sekolah Athalia:\n\n${directImageUrl}`);
+                        const waShareUrl = `https://api.whatsapp.com/send?text=${waText}`;
 
                         qrcodeContainer.innerHTML = '';
                         new QRCode(qrcodeContainer, {
-                            text: directRawUrl,
+                            text: waShareUrl,
                             width: 120,
                             height: 120,
                             correctLevel: QRCode.CorrectLevel.L
                         });
-                        qrStatus.textContent = "SCAN QR UNTUK UNDUH";
+                        qrStatus.textContent = "SCAN UNTUK KIRIM KE WA";
                     } else {
-                        throw new Error("Gagal mengunggah ke Pixeldrain");
+                        throw new Error("Gagal mengunggah gambar ke ImgBB");
                     }
                 } catch (err) {
                     console.error("Error QR Upload:", err);
-                    qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal buat QR (Cek Internet)</span>';
+                    qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:600;">Gagal Buat QR (Cek Internet)</span>';
                     qrStatus.textContent = "QR ERROR";
                 }
-            }, 'image/jpeg', 0.75);
+            }, 'image/jpeg', 0.8);
         }
 
         // 6. DYNAMIC PRINT INJECTION
