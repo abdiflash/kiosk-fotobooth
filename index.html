@@ -608,87 +608,107 @@
             alert("🎉 Pembayaran Berhasil! Pass 24 Jam Aktif. Watermark www.edueasy.id telah dihilangkan.");
         }
 
-        // INTEGRASI MIDTRANS SNAP REAL DENGAN WORDPRESS REST API
-        async function triggerMidtransPayment() {
-            try {
-                // Panggil Endpoint API WordPress
-                const response = await fetch('https://edueasy.id/wp-json/photobooth/v1/create-snap-token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-});
+// INTEGRASI MIDTRANS SNAP REAL DENGAN WORDPRESS REST API
+async function triggerMidtransPayment() {
+    const activeBtn = midtransPayBtn || modalPayBtn;
+    const originalText = activeBtn ? activeBtn.innerText : '';
 
-                const data = await response.json();
-
-                if (!data || !data.token) {
-                    alert("Gagal mendapatkan token transaksi dari server WordPress.");
-                    return;
-                }
-
-                if (typeof snap !== 'undefined' && snap.pay) {
-                    window.snap.pay(data.token, {
-                        onSuccess: function(result) {
-                            activatePass24Hours();
-                        },
-                        onPending: function(result) {
-                            alert("Menunggu pembayaran diselesaikan...");
-                        },
-                        onError: function(result) {
-                            alert("Transaksi pembayaran gagal diselesaikan.");
-                        },
-                        onClose: function() {
-                            console.log('Modal pembayaran ditutup.');
-                        }
-                    });
-                } else {
-                    alert("Midtrans Snap JS belum termuat secara sempurna.");
-                }
-
-            } catch (err) {
-                console.error("Midtrans WP Error:", err);
-                alert("Terjadi kesalahan koneksi ke server WordPress.");
-            }
+    try {
+        if (activeBtn) {
+            activeBtn.innerText = 'Memproses...';
+            activeBtn.disabled = true;
         }
 
-        midtransPayBtn.addEventListener('click', triggerMidtransPayment);
-        modalPayBtn.addEventListener('click', triggerMidtransPayment);
-        activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
-        closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
-        submitPassBtn.addEventListener('click', () => {
-            if (processPassCode(inputPassCode.value)) {
-                inputPassCode.value = '';
-                activationModal.classList.remove('active');
-            }
+        // Panggil Endpoint API WordPress
+        const response = await fetch('https://edueasy.id/wp-json/photobooth/v1/create-snap-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
         });
 
-        function updateLivePreviewLayout() {
-            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
-            const ratio = config.w / config.h;
-
-            cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
-
-            if (config.isPortrait) {
-                cameraWrapper.style.height = '62vh';
-                cameraWrapper.style.width = `calc(62vh * ${ratio})`;
-                cameraWrapper.style.maxWidth = '100%';
-                cameraWrapper.style.maxHeight = 'none';
-            } else {
-                cameraWrapper.style.width = '100%';
-                cameraWrapper.style.height = 'auto';
-                cameraWrapper.style.maxHeight = '62vh';
-                cameraWrapper.style.maxWidth = '100%';
-            }
-
-            const marginPx = parseInt(safeAreaMargin.value) || 0;
-            const percentX = (marginPx / config.w) * 100;
-            const percentY = (marginPx / config.h) * 100;
-
-            safeZoneGuide.style.top = `${percentY}%`;
-            safeZoneGuide.style.bottom = `${percentY}%`;
-            safeZoneGuide.style.left = `${percentX}%`;
-            safeZoneGuide.style.right = `${percentX}%`;
-
-            saveSettings();
+        if (!response.ok) {
+            throw new Error(`Server WP mengembalikan status ${response.status}`);
         }
+
+        const data = await response.json();
+
+        if (!data || !data.token) {
+            alert("Gagal mendapatkan token transaksi dari server WordPress.");
+            return;
+        }
+
+        // Eksekusi Midtrans Snap
+        if (typeof snap !== 'undefined' && snap.pay) {
+            window.snap.pay(data.token, {
+                onSuccess: function(result) {
+                    alert("Pembayaran Berhasil! Pass 24 Jam telah diaktifkan.");
+                    activatePass24Hours();
+                },
+                onPending: function(result) {
+                    alert("Menunggu pembayaran diselesaikan...");
+                },
+                onError: function(result) {
+                    alert("Transaksi pembayaran gagal diselesaikan.");
+                },
+                onClose: function() {
+                    console.log('Modal pembayaran ditutup oleh pengguna.');
+                }
+            });
+        } else {
+            alert("Midtrans Snap JS belum termuat secara sempurna.");
+        }
+
+    } catch (err) {
+        console.error("Midtrans WP Error:", err);
+        alert("Terjadi kesalahan koneksi ke server WordPress.");
+    } finally {
+        if (activeBtn) {
+            activeBtn.innerText = originalText;
+            activeBtn.disabled = false;
+        }
+    }
+}
+
+// Event Listeners (TETAP DIPERTAHANKAN)
+midtransPayBtn.addEventListener('click', triggerMidtransPayment);
+modalPayBtn.addEventListener('click', triggerMidtransPayment);
+activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
+closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
+submitPassBtn.addEventListener('click', () => {
+    if (processPassCode(inputPassCode.value)) {
+        inputPassCode.value = '';
+        activationModal.classList.remove('active');
+    }
+});
+
+function updateLivePreviewLayout() {
+    const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+    const ratio = config.w / config.h;
+
+    cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
+
+    if (config.isPortrait) {
+        cameraWrapper.style.height = '62vh';
+        cameraWrapper.style.width = `calc(62vh * ${ratio})`;
+        cameraWrapper.style.maxWidth = '100%';
+        cameraWrapper.style.maxHeight = 'none';
+    } else {
+        cameraWrapper.style.width = '100%';
+        cameraWrapper.style.height = 'auto';
+        cameraWrapper.style.maxHeight = '62vh';
+        cameraWrapper.style.maxWidth = '100%';
+    }
+
+    const marginPx = parseInt(safeAreaMargin.value) || 0;
+    const percentX = (marginPx / config.w) * 100;
+    const percentY = (marginPx / config.h) * 100;
+
+    safeZoneGuide.style.top = `${percentY}%`;
+    safeZoneGuide.style.bottom = `${percentY}%`;
+    safeZoneGuide.style.left = `${percentX}%`;
+    safeZoneGuide.style.right = `${percentX}%`;
+
+    saveSettings();
+}
 
         function saveSettings() {
             localStorage.setItem('pb_eventTitle', eventTitle.value);
