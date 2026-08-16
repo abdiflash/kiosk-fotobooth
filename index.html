@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
-    <!-- MIDTRANS SNAP SCRIPT SELECTION -->
+    <!-- MIDTRANS SNAP SCRIPT -->
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-rnc3mNnApeaBVnOo"></script>
 
     <style id="dynamicPrintStyle">
@@ -52,7 +52,7 @@
             overflow-x: hidden;
         }
 
-        /* RESPONSIVE HEADER */
+        /* HEADER */
         header {
             background: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(12px);
@@ -84,7 +84,7 @@
             flex-wrap: wrap;
         }
 
-        /* LICENSE STATUS BADGE */
+        /* BADGE LISENSI */
         .license-badge {
             font-size: 0.75rem;
             font-weight: 700;
@@ -135,7 +135,7 @@
         .btn-wa { background: #25D366; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); color: #fff; }
         .btn-wa:hover { background: #1da851; }
 
-        /* MAIN LAYOUT */
+        /* LAYOUT UTAMA */
         main {
             flex: 1;
             display: grid;
@@ -173,7 +173,7 @@
             font-weight: 700;
         }
 
-        /* COLOR PICKER & PRESETS */
+        /* COLOR PICKER */
         .color-picker-wrapper {
             display: flex;
             align-items: center;
@@ -215,7 +215,7 @@
             background: none;
         }
 
-        /* CAMERA DISPLAY STAGE */
+        /* CAMERA STAGE */
         .stage-container {
             background: #000;
             border-radius: var(--radius-lg);
@@ -286,7 +286,7 @@
         .capture-bar { position: absolute; bottom: 20px; z-index: 30; }
         .btn-capture { padding: 14px 40px; font-size: 1.1rem; border-radius: 100px; font-weight: 700; }
 
-        /* MODAL RESPONSIVE */
+        /* MODAL */
         .modal {
             position: fixed; inset: 0;
             background: rgba(4, 7, 13, 0.88);
@@ -462,7 +462,7 @@
         </div>
     </div>
 
-<!-- PASS ACTIVATION MODAL (FIXED LAYOUT) -->
+    <!-- PASS ACTIVATION MODAL (CLEAN & FIXED) -->
     <div class="modal" id="activationModal">
         <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white;">
             <h3 style="margin-bottom: 8px; font-size: 1.1rem; text-align: center;">🔑 Aktivasi Kiosk Pass</h3>
@@ -470,25 +470,21 @@
                 Masukkan Pass Code dari Admin untuk mengaktifkan durasi photobooth tanpa watermark.
             </p>
 
-            <!-- INPUT PASS CODE -->
             <div style="margin-bottom: 16px;">
                 <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 6px;">Pass Code Lisensi:</label>
                 <input type="text" id="inputPassCode" placeholder="Contoh: PASS144-K8J2-9F1A" style="width: 100%; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 1px; padding: 12px; border-radius: 8px; border: 1px solid var(--panel-border); background: #0f172a; color: #fff;">
             </div>
 
-            <!-- AKSI TOMBOL UTAMA -->
             <div style="display: flex; gap: 10px; margin-bottom: 24px;">
                 <button id="closeActivationBtn" style="flex: 1; background: #475569; padding: 10px;">Batal</button>
                 <button id="submitPassBtn" class="btn-success" style="flex: 1; padding: 10px;">Aktivasi Kode</button>
             </div>
 
-            <!-- GARIS PEMISAH -->
             <div style="position: relative; text-align: center; margin-bottom: 20px;">
                 <hr style="border: none; border-top: 1px dashed var(--panel-border);">
                 <span style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #1e293b; padding: 0 10px; font-size: 10px; color: #94a3b8; font-weight: bold; white-space: nowrap;">BELUM PUNYA KODE?</span>
             </div>
 
-            <!-- CTA WHATSAPP (DISPLAY FLEX FIX) -->
             <a href="https://wa.me/6282113866890?text=Halo%20Admin%20Photobooth,%20saya%20ingin%20aktivasi%20Pass%20Code%20secara%20manual.%20Berikut%20bukti%20transfernya:" 
                target="_blank" class="btn-wa" 
                style="display: flex; width: 100%; padding: 12px; font-size: 0.85rem; border-radius: var(--radius-md); text-decoration: none; justify-content: center; align-items: center; box-sizing: border-box;">
@@ -512,7 +508,6 @@
                 <input type="text" id="inputEventName" placeholder="e.g. Graduation 2026" style="width: 100%; margin-top: 4px;">
             </div>
 
-            <!-- DYNAMIC PASS STATUS READ-ONLY -->
             <div style="margin-bottom: 20px; border-top: 1px dashed var(--panel-border); padding-top: 12px;">
                 <label style="font-size: 11px; font-weight: bold; color: #10b981; text-transform: uppercase; display: block; margin-bottom: 6px;">
                     ⏱️ PASS STATUS & EXPIRY:
@@ -534,7 +529,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1--xNcCNfK0hOzvzJQbO1LoPP4RDhJFwZRkajKLJuTC0ev8z30YQw3hyLQIg9jr0kEw/exec';
-        const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026"; // Harus sama persis dengan admin-generator.html
+        const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026";
 
         const dnpDimensions = {
             '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
@@ -550,8 +545,8 @@
         // DOM ELEMENTS
         const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), safeAreaMargin = document.getElementById('safeAreaMargin'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), passStatusText = document.getElementById('passStatusText'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus');
 
-        // LICENSE & ACTIVATION DOM
-        const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn'), modalPayBtn = document.getElementById('modalPayBtn');
+        // LICENSE DOM
+        const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn');
 
         function extractFolderId(input) {
             if (!input) return "";
@@ -559,7 +554,7 @@
             return match ? match[1] : input.trim();
         }
 
-        // PASS STATUS & LICENSE CONTROL
+        // PASS STATUS CONTROL
         function isPassActive() {
             const expiryStr = localStorage.getItem('cfg_expiry_date');
             if (!expiryStr) return false;
@@ -619,7 +614,6 @@
             updateLicenseStatusUI();
         }
 
-        // FUNGSI UTAMA VERIFIKASI SHA-256 PASS CODE DARI ADMIN GENERATOR
         async function verifyAndApplyPassCode(code) {
             const cleanCode = code.trim().toUpperCase();
             if (!cleanCode) {
@@ -634,7 +628,6 @@
                 return true;
             }
 
-            // Format Validasi: PASS{hours}-{salt}-{checksum} (misal: PASS144-K8J2-9F1A)
             const match = cleanCode.match(/^PASS(\d+)-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
             if (!match) {
                 alert("Format Pass Code tidak valid! Pastikan kode sesuai format PASS[JAM]-[SALT]-[CHECKSUM]");
@@ -645,7 +638,6 @@
             const salt = match[2];
             const checksum = match[3];
 
-            // Re-calculate checksum menggunakan SHA-256
             const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
             const msgBuffer = new TextEncoder().encode(input);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -662,7 +654,6 @@
             }
         }
 
-        // MENAMBAHKAN JAM SECARA AKUMULATIF KE SISA MASA AKTIF
         function addPassHours(hoursToAdd) {
             const expiryStr = localStorage.getItem('cfg_expiry_date');
             const currentExpiry = expiryStr ? new Date(expiryStr).getTime() : 0;
@@ -675,7 +666,6 @@
             updateLicenseStatusUI();
         }
 
-        // AKTIFAKSI PASCA-PEMBAYARAN MIDTRANS
         function activatePassByAmount(paidAmount = 50000) {
             const multiplier = Math.max(1, Math.floor(paidAmount / 50000));
             const hoursToAdd = multiplier * 24;
@@ -685,9 +675,8 @@
             alert(`🎉 Pembayaran Berhasil! Durasi bertambah +${hoursToAdd} Jam (${multiplier} Hari). Watermark dinonaktifkan.`);
         }
 
-        // MIDTRANS SNAP REAL INTEGRATION WITH WORDPRESS REST API
         async function triggerMidtransPayment() {
-            const activeBtn = midtransPayBtn || modalPayBtn;
+            const activeBtn = midtransPayBtn;
             const originalText = activeBtn ? activeBtn.innerText : '';
 
             try {
@@ -701,14 +690,11 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (!response.ok) {
-                    throw new Error(`WordPress server returned status ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`Server status ${response.status}`);
                 const data = await response.json();
 
                 if (!data || !data.token) {
-                    alert("Failed to retrieve transaction token from server.");
+                    alert("Gagal mendapatkan token transaksi.");
                     return;
                 }
 
@@ -718,23 +704,16 @@
                             const grossAmount = parseInt(result.gross_amount) || 50000;
                             activatePassByAmount(grossAmount);
                         },
-                        onPending: function(result) {
-                            alert("Awaiting payment completion...");
-                        },
-                        onError: function(result) {
-                            alert("Payment transaction failed.");
-                        },
-                        onClose: function() {
-                            console.log('Payment modal closed by user.');
-                        }
+                        onPending: function() { alert("Menunggu pembayaran..."); },
+                        onError: function() { alert("Transaksi pembayaran gagal."); }
                     });
                 } else {
-                    alert("Midtrans Snap JS library is not fully loaded.");
+                    alert("Library Midtrans Snap belum siap.");
                 }
 
             } catch (err) {
-                console.error("Midtrans WP Error:", err);
-                alert("Connection error with server.");
+                console.error("Midtrans Error:", err);
+                alert("Gagal terhubung ke server pembayaran.");
             } finally {
                 if (activeBtn) {
                     activeBtn.innerText = originalText;
@@ -743,19 +722,20 @@
             }
         }
 
-        // EVENT LISTENERS
-        midtransPayBtn.addEventListener('click', triggerMidtransPayment);
-        modalPayBtn.addEventListener('click', triggerMidtransPayment);
-        activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
-        closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
+        // EVENT LISTENERS DEKLARASI
+        if (midtransPayBtn) midtransPayBtn.addEventListener('click', triggerMidtransPayment);
+        if (activatePassBtn) activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
+        if (closeActivationBtn) closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
         
-        submitPassBtn.addEventListener('click', async () => {
-            const isSuccess = await verifyAndApplyPassCode(inputPassCode.value);
-            if (isSuccess) {
-                inputPassCode.value = '';
-                activationModal.classList.remove('active');
-            }
-        });
+        if (submitPassBtn) {
+            submitPassBtn.addEventListener('click', async () => {
+                const isSuccess = await verifyAndApplyPassCode(inputPassCode.value);
+                if (isSuccess) {
+                    inputPassCode.value = '';
+                    activationModal.classList.remove('active');
+                }
+            });
+        }
 
         function updateLivePreviewLayout() {
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
@@ -813,11 +793,13 @@
         }
 
         [eventTitle, eventSub, dnpSizeSelect, poseFormat, safeAreaMargin, filterSelect].forEach(elem => {
-            elem.addEventListener('input', updateLivePreviewLayout);
-            elem.addEventListener('change', updateLivePreviewLayout);
+            if (elem) {
+                elem.addEventListener('input', updateLivePreviewLayout);
+                elem.addEventListener('change', updateLivePreviewLayout);
+            }
         });
 
-        // COLOR PICKER & PRESETS
+        // COLOR PICKER
         document.querySelectorAll('.color-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -827,37 +809,43 @@
             });
         });
 
-        customColorPicker.addEventListener('input', (e) => {
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            selectedBgColor = e.target.value;
-            saveSettings();
-        });
+        if (customColorPicker) {
+            customColorPicker.addEventListener('input', (e) => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                selectedBgColor = e.target.value;
+                saveSettings();
+            });
+        }
 
-        // SETTINGS MODAL
-        settingsBtn.addEventListener('click', () => {
-            inputDriveLink.value = localStorage.getItem('cfg_drive_link') || '';
-            inputEventName.value = localStorage.getItem('cfg_event_name') || eventTitle.value || '';
-            updateEventSettingsPassStatus();
-            settingsModal.classList.add('active');
-        });
+        // SETTINGS MODAL LISTENERS
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                inputDriveLink.value = localStorage.getItem('cfg_drive_link') || '';
+                inputEventName.value = localStorage.getItem('cfg_event_name') || eventTitle.value || '';
+                updateEventSettingsPassStatus();
+                settingsModal.classList.add('active');
+            });
+        }
 
-        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
+        if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
 
-        saveSettingsBtn.addEventListener('click', () => {
-            const linkVal = inputDriveLink.value.trim();
-            const eventVal = inputEventName.value.trim();
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => {
+                const linkVal = inputDriveLink.value.trim();
+                const eventVal = inputEventName.value.trim();
 
-            if (!linkVal) { alert("Google Drive Master Folder link is required!"); return; }
+                if (!linkVal) { alert("Google Drive Master Folder link is required!"); return; }
 
-            localStorage.setItem('cfg_drive_link', linkVal);
-            localStorage.setItem('cfg_event_name', eventVal || 'Photobooth Event');
+                localStorage.setItem('cfg_drive_link', linkVal);
+                localStorage.setItem('cfg_event_name', eventVal || 'Photobooth Event');
 
-            if (eventVal) { eventTitle.value = eventVal; saveSettings(); }
+                if (eventVal) { eventTitle.value = eventVal; saveSettings(); }
 
-            alert("Settings saved successfully!");
-            settingsModal.classList.remove('active');
-            updateLicenseStatusUI();
-        });
+                alert("Settings saved successfully!");
+                settingsModal.classList.remove('active');
+                updateLicenseStatusUI();
+            });
+        }
 
         async function initCameras() {
             loadSettings();
@@ -875,7 +863,6 @@
             } catch (err) { alert('Failed to detect cameras: ' + err.message); }
         }
 
-        // MEMAKSA RESOLUSI KAMERA MAKSIMAL (4K / 1080p)
         async function startCamera(deviceId) {
             if (currentStream) currentStream.getTracks().forEach(t => t.stop());
             try {
@@ -887,46 +874,49 @@
                     }
                 });
                 webcam.srcObject = currentStream;
-                webcam.onloadedmetadata = () => {
-                    console.log(`[Camera Active] Native Resolution: ${webcam.videoWidth} x ${webcam.videoHeight}`);
-                };
             } catch (err) { console.error("Camera error:", err); }
         }
 
-        cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
-        mirrorBtn.addEventListener('click', () => { isMirrored = !isMirrored; webcam.classList.toggle('mirrored', isMirrored); });
-        fullscreenBtn.addEventListener('click', () => {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else document.exitFullscreen();
-        });
+        if (cameraSelect) cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
+        if (mirrorBtn) mirrorBtn.addEventListener('click', () => { isMirrored = !isMirrored; webcam.classList.toggle('mirrored', isMirrored); });
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+        }
 
-        overlayInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    const img = new Image();
-                    img.onload = () => { customOverlayImage = img; liveOverlay.src = evt.target.result; liveOverlay.style.display = 'block'; };
-                    img.src = evt.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+        if (overlayInput) {
+            overlayInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        const img = new Image();
+                        img.onload = () => { customOverlayImage = img; liveOverlay.src = evt.target.result; liveOverlay.style.display = 'block'; };
+                        img.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
 
-        startBtn.addEventListener('click', async () => {
-            capturedPhotos = [];
-            startBtn.style.display = 'none';
-            const totalPoses = parseInt(poseFormat.value);
+        if (startBtn) {
+            startBtn.addEventListener('click', async () => {
+                capturedPhotos = [];
+                startBtn.style.display = 'none';
+                const totalPoses = parseInt(poseFormat.value);
 
-            for (let i = 0; i < totalPoses; i++) {
-                await runCountdown(3);
-                triggerFlash();
-                captureFrame();
-                if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1500));
-            }
-            startBtn.style.display = 'inline-flex';
-            buildPhotostrip();
-        });
+                for (let i = 0; i < totalPoses; i++) {
+                    await runCountdown(3);
+                    triggerFlash();
+                    captureFrame();
+                    if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1500));
+                }
+                startBtn.style.display = 'inline-flex';
+                buildPhotostrip();
+            });
+        }
 
         function runCountdown(sec) {
             return new Promise((resolve) => {
@@ -945,7 +935,6 @@
             setTimeout(() => flashElem.classList.remove('active'), 350);
         }
 
-        // CAPTURE FRAME RESOLUSI FULL DENGAN PENAJAMAN
         function captureFrame() {
             const canvas = document.createElement('canvas');
             const vW = webcam.videoWidth || 1920;
@@ -963,7 +952,6 @@
             capturedPhotos.push(canvas.toDataURL('image/png', 1.0));
         }
 
-        // RENDER CANOPY PHOTOSTRIP UNTUK SIAP CETAK (HIGH DPI)
         function buildPhotostrip() {
             const canvas = outputCanvas; const ctx = canvas.getContext('2d');
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
@@ -1031,7 +1019,6 @@
                 }
             }
 
-            // AUTOMATIC WATERMARK DRAWING IF PASS IS NOT ACTIVE
             if (!isPassActive()) {
                 drawWatermark(ctx, canvas.width, canvas.height);
             }
@@ -1040,7 +1027,6 @@
             resultModal.classList.add('active');
         }
 
-        // AUTOMATIC WATERMARK FUNCTION
         function drawWatermark(ctx, width, height) {
             ctx.save();
             ctx.rotate(-Math.PI / 6);
@@ -1065,7 +1051,6 @@
             ctx.fillText('DEMO MODE — BUY PASS TO REMOVE WATERMARK: WWW.EDUEASY.ID', width / 2, height - 20);
         }
 
-        // PEMOTONGAN GAMBAR DENGAN HIGH-QUALITY SMOOTHING
         function drawCroppedImage(ctx, img, x, y, w, h) {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
@@ -1080,7 +1065,6 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // DIGITAL QR COMPRESSION OPTIMIZATION (HIGH SHARPNESS & LOW FILE SIZE)
         function generateOnlineQRCode() {
             const rawDriveLink = localStorage.getItem('cfg_drive_link') || "";
             const activeFolderId = extractFolderId(rawDriveLink);
@@ -1096,7 +1080,7 @@
             qrStatus.textContent = "GENERATING QR CODE...";
 
             const webCanvas = document.createElement('canvas');
-            const targetW = 800; // Lebar optimal tajam di HP tanpa bikin lemot (~180-250KB)
+            const targetW = 800;
             const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
             webCanvas.width = targetW; 
             webCanvas.height = targetH;
@@ -1106,7 +1090,6 @@
             webCtx.imageSmoothingQuality = 'high';
             webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
             
-            // Kompresi JPEG 70% untuk kejernihan tinggi saat di-zoom di HP
             const base64Image = webCanvas.toDataURL('image/jpeg', 0.7);
 
             fetch(GOOGLE_SCRIPT_URL, {
@@ -1128,32 +1111,38 @@
             });
         }
 
-        printBtn.addEventListener('click', () => {
-            const printArea = document.getElementById('printArea');
-            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
-            document.getElementById('dynamicPrintStyle').innerHTML = `@page { size: ${config.printSize}; margin: 0; }`;
-            printArea.innerHTML = '';
-            const img = new Image();
-            img.onload = () => { printArea.appendChild(img); setTimeout(() => window.print(), 300); };
-            img.src = outputCanvas.toDataURL('image/png');
-        });
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                const printArea = document.getElementById('printArea');
+                const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+                document.getElementById('dynamicPrintStyle').innerHTML = `@page { size: ${config.printSize}; margin: 0; }`;
+                printArea.innerHTML = '';
+                const img = new Image();
+                img.onload = () => { printArea.appendChild(img); setTimeout(() => window.print(), 300); };
+                img.src = outputCanvas.toDataURL('image/png');
+            });
+        }
 
-        downloadPngBtn.addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = `photobooth-${Date.now()}.png`;
-            link.href = outputCanvas.toDataURL();
-            link.click();
-        });
+        if (downloadPngBtn) {
+            downloadPngBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = `photobooth-${Date.now()}.png`;
+                link.href = outputCanvas.toDataURL();
+                link.click();
+            });
+        }
 
-        downloadZipBtn.addEventListener('click', () => {
-            const zip = new JSZip();
-            const folder = zip.folder("photobooth_session");
-            folder.file("photostrip_full.png", outputCanvas.toDataURL().split(',')[1], { base64: true });
-            capturedPhotos.forEach((photo, idx) => folder.file(`pose_${idx + 1}.png`, photo.split(',')[1], { base64: true }));
-            zip.generateAsync({ type: "blob" }).then((blob) => saveAs(blob, `photobooth-session-${Date.now()}.zip`));
-        });
+        if (downloadZipBtn) {
+            downloadZipBtn.addEventListener('click', () => {
+                const zip = new JSZip();
+                const folder = zip.folder("photobooth_session");
+                folder.file("photostrip_full.png", outputCanvas.toDataURL().split(',')[1], { base64: true });
+                capturedPhotos.forEach((photo, idx) => folder.file(`pose_${idx + 1}.png`, photo.split(',')[1], { base64: true }));
+                zip.generateAsync({ type: "blob" }).then((blob) => saveAs(blob, `photobooth-session-${Date.now()}.zip`));
+            });
+        }
 
-        closeModalBtn.addEventListener('click', () => { capturedPhotos = []; resultModal.classList.remove('active'); });
+        if (closeModalBtn) closeModalBtn.addEventListener('click', () => { capturedPhotos = []; resultModal.classList.remove('active'); });
 
         window.addEventListener('load', initCameras);
     </script>
