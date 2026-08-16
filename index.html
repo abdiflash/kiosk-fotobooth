@@ -462,38 +462,38 @@
         </div>
     </div>
 
-    <!-- PASS ACTIVATION MODAL -->
+<!-- PASS ACTIVATION MODAL (FIXED LAYOUT) -->
     <div class="modal" id="activationModal">
-        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 440px; width:100%; border: 1px solid var(--panel-border); color: white;">
-            <h3 style="margin-bottom: 8px; font-size: 1.1rem;">🔑 Activate Kiosk Pass</h3>
-            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 16px;">Scan QRIS via Midtrans untuk aktivasi instan, atau transfer manual dan minta Pass Code ke Admin.</p>
-            
-            <!-- TOMBOL MIDTRANS (OTOMATIS) -->
-            <button id="modalPayBtn" class="btn-buy" style="width: 100%; padding: 12px; margin-bottom: 10px; font-size: 0.9rem;">
-                ⚡ BAYAR OTOMATIS VIA MIDTRANS (QRIS)
-            </button>
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white;">
+            <h3 style="margin-bottom: 8px; font-size: 1.1rem; text-align: center;">🔑 Aktivasi Kiosk Pass</h3>
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 20px; text-align: center;">
+                Masukkan Pass Code dari Admin untuk mengaktifkan durasi photobooth tanpa watermark.
+            </p>
 
-            <!-- CTA TOMBOL WHATSAPP (TRANSFER MANUAL) -->
+            <!-- INPUT PASS CODE -->
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 6px;">Pass Code Lisensi:</label>
+                <input type="text" id="inputPassCode" placeholder="Contoh: PASS144-K8J2-9F1A" style="width: 100%; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 1px; padding: 12px; border-radius: 8px; border: 1px solid var(--panel-border); background: #0f172a; color: #fff;">
+            </div>
+
+            <!-- AKSI TOMBOL UTAMA -->
+            <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+                <button id="closeActivationBtn" style="flex: 1; background: #475569; padding: 10px;">Batal</button>
+                <button id="submitPassBtn" class="btn-success" style="flex: 1; padding: 10px;">Aktivasi Kode</button>
+            </div>
+
+            <!-- GARIS PEMISAH -->
+            <div style="position: relative; text-align: center; margin-bottom: 20px;">
+                <hr style="border: none; border-top: 1px dashed var(--panel-border);">
+                <span style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #1e293b; padding: 0 10px; font-size: 10px; color: #94a3b8; font-weight: bold; white-space: nowrap;">BELUM PUNYA KODE?</span>
+            </div>
+
+            <!-- CTA WHATSAPP (DISPLAY FLEX FIX) -->
             <a href="https://wa.me/6282113866890?text=Halo%20Admin%20Photobooth,%20saya%20ingin%20aktivasi%20Pass%20Code%20secara%20manual.%20Berikut%20bukti%20transfernya:" 
                target="_blank" class="btn-wa" 
-               style="width: 100%; padding: 12px; margin-bottom: 16px; font-size: 0.85rem; border-radius: var(--radius-md);">
+               style="display: flex; width: 100%; padding: 12px; font-size: 0.85rem; border-radius: var(--radius-md); text-decoration: none; justify-content: center; align-items: center; box-sizing: border-box;">
                 💬 TRANSFER MANUAL / HUBUNGI ADMIN (WA)
             </a>
-
-            <div style="position: relative; text-align: center; margin-bottom: 16px;">
-                <hr style="border: none; border-top: 1px dashed var(--panel-border);">
-                <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #1e293b; padding: 0 8px; font-size: 10px; color: #94a3b8; font-weight: bold;">MASUKKAN KODE LISENSI ADMIN</span>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Pass Code:</label>
-                <input type="text" id="inputPassCode" placeholder="Contoh: PASS144-K8J2-9F1A" style="width: 100%; margin-top: 6px; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 1px;">
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button id="closeActivationBtn" style="background: #475569;">Batal</button>
-                <button id="submitPassBtn" class="btn-success">Aktivasi Kode</button>
-            </div>
         </div>
     </div>
 
