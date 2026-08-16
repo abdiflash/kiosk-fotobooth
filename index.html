@@ -14,6 +14,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
+    <!-- MIDTRANS SNAP JS (Ganti client-key dengan Client Key Sandbox/Production Anda) -->
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-YOUR_CLIENT_KEY"></script>
+
     <style id="dynamicPrintStyle">
         @page { size: 5in 7in; margin: 0; }
     </style>
@@ -81,6 +84,19 @@
             flex-wrap: wrap;
         }
 
+        /* STATUS BADGE LISENSI */
+        .license-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .license-badge.free { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .license-badge.active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+
         select, input[type="text"], input[type="datetime-local"] {
             background: #1e293b;
             color: var(--text-title);
@@ -92,7 +108,7 @@
             max-width: 100%;
         }
 
-        button {
+        button, .btn-link {
             background: #1e293b;
             color: #fff;
             border: 1px solid var(--panel-border);
@@ -106,11 +122,16 @@
             justify-content: center;
             gap: 6px;
             transition: all 0.2s ease;
+            text-decoration: none;
         }
 
-        button:hover { background: #334155; }
+        button:hover, .btn-link:hover { background: #334155; }
         .btn-primary { background: var(--accent); border: none; box-shadow: 0 4px 14px var(--accent-glow); }
         .btn-primary:hover { background: var(--accent-hover); }
+        .btn-success { background: #10b981; border: none; }
+        .btn-success:hover { background: #059669; }
+        .btn-buy { background: #2563eb; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+        .btn-buy:hover { background: #1d4ed8; }
 
         /* MAIN RESPONSIVE LAYOUT */
         main {
@@ -298,18 +319,6 @@
         }
         .qr-card p { color: #0f172a; font-size: 0.7rem; font-weight: 700; }
 
-        /* LICENSE EXPIRATION LOCK SCREEN */
-        .lock-screen {
-            position: fixed; inset: 0; background: #090d16;
-            z-index: 999; display: none; flex-direction: column;
-            justify-content: center; align-items: center; padding: 20px; text-align: center;
-        }
-        .lock-card {
-            background: #1e293b; border: 1px solid var(--panel-border);
-            padding: 30px; border-radius: 20px; max-width: 420px; width: 100%;
-        }
-
-        /* MEDIA QUERIES (MOBILE / TABLET ADAPTATION) */
         @media (max-width: 900px) {
             main { grid-template-columns: 1fr; }
             .modal-card { flex-direction: column; }
@@ -331,23 +340,13 @@
 </head>
 <body>
 
-    <!-- LOCK SCREEN (MONETISASI / MASA SEWA HABIS) -->
-    <div class="lock-screen" id="lockScreen">
-        <div class="lock-card">
-            <h2 style="color:#ef4444; margin-bottom:10px;">⏳ Masa Sewa Berakhir</h2>
-            <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:20px;">
-                Masa aktif pemakaian Photobooth untuk event ini telah habis. Silakan hubungi admin untuk perpanjangan sewa.
-            </p>
-            <a href="https://wa.me/6282113866890?text=Halo%20Admin,%20saya%20mau%20perpanjang%20sewa%20photobooth" target="_blank">
-                <button class="btn-primary" style="width:100%; padding:12px;">💬 Hubungi Admin / Bayar BCA</button>
-            </a>
-        </div>
-    </div>
-
     <!-- NAVBAR HEADER -->
     <header>
-        <div class="brand">📷 KIOSK PHOTOBOOTH PRO Ver 9.0</div>
+        <div class="brand">📷 KIOSK PHOTOBOOTH PRO</div>
         <div class="controls-top">
+            <span id="licenseBadge" class="license-badge free">🟠 Mode Gratis (Watermark)</span>
+            <button id="midtransPayBtn" class="btn-buy">🛒 Beli Pass 24 Jam (QRIS)</button>
+            <button id="activatePassBtn" class="btn-success">🔑 Masukkan Kode Pass</button>
             <button id="settingsBtn" style="background:#3b82f6; border:none;">⚙️ Setting Event</button>
             <select id="cameraSelect"><option>Memuat Kamera...</option></select>
             <button id="mirrorBtn">↔️ Mirror</button>
@@ -392,7 +391,6 @@
                     <button class="color-btn" data-color="#090d16" style="background: #090d16;"></button>
                     <button class="color-btn" data-color="#f472b6" style="background: #f472b6;"></button>
                     <button class="color-btn" data-color="#38bdf8" style="background: #38bdf8;"></button>
-                    <!-- SUNTIKAN WARNA / CUSTOM COLOR PICKER -->
                     <div class="custom-color-btn" title="Pilih Warna Kustom (Dropper)">
                         <input type="color" id="customColorPicker" value="#ffffff">
                     </div>
@@ -462,10 +460,37 @@
         </div>
     </div>
 
-    <!-- SETTINGS & MONETIZATION MODAL -->
+    <!-- MODAL AKTIVASI PASS 24 JAM -->
+    <div class="modal" id="activationModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 440px; width:100%; border: 1px solid var(--panel-border); color: white;">
+            <h3 style="margin-bottom: 8px; font-size: 1.1rem;">🔑 Aktivasi Pass 24 Jam</h3>
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 16px;">Scan QRIS via Midtrans untuk membuka watermark www.edueasy.id secara instan, atau masukkan kode lisensi yang Anda miliki.</p>
+            
+            <button id="modalPayBtn" class="btn-buy" style="width: 100%; padding: 12px; margin-bottom: 16px; font-size: 0.9rem;">
+                ⚡ BAYAR VIA MIDTRANS (QRIS / BANK)
+            </button>
+
+            <div style="position: relative; text-align: center; margin-bottom: 16px;">
+                <hr style="border: none; border-top: 1px dashed var(--panel-border);">
+                <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #1e293b; padding: 0 8px; font-size: 10px; color: #94a3b8; font-weight: bold;">ATAU MASUKKAN KODE</span>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Kode Lisensi Pass:</label>
+                <input type="text" id="inputPassCode" placeholder="Masukkan kode (Contoh: PASS24-XXXX)" style="width: 100%; margin-top: 6px; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 1px;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button id="closeActivationBtn" style="background: #475569;">Batal</button>
+                <button id="submitPassBtn" class="btn-success">Aktifkan Kode</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS & EVENT MODAL -->
     <div class="modal" id="settingsModal">
         <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 440px; width:100%; border: 1px solid var(--panel-border); color: white;">
-            <h3 style="margin-bottom: 16px; font-size: 1.1rem;">⚙️ Pengaturan Event & Lisensi</h3>
+            <h3 style="margin-bottom: 16px; font-size: 1.1rem;">⚙️ Pengaturan Event & Sistem</h3>
             
             <div style="margin-bottom: 12px;">
                 <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Link Folder Drive Master Sekolah:</label>
@@ -477,11 +502,10 @@
                 <input type="text" id="inputEventName" placeholder="Contoh: Edufair 2026" style="width: 100%; margin-top: 4px;">
             </div>
 
-            <!-- BATAS WAKTU SEWA / LISENSI -->
             <div style="margin-bottom: 20px; border-top: 1px dashed var(--panel-border); padding-top: 12px;">
-                <label style="font-size: 11px; font-weight: bold; color: #f59e0b; text-transform: uppercase;">⏱️ Batas Waktu Sewa (Expired Date):</label>
+                <label style="font-size: 11px; font-weight: bold; color: #10b981; text-transform: uppercase;">⏱️ Batas Waktu Pass Aktif:</label>
                 <input type="datetime-local" id="inputExpiryDate" style="width: 100%; margin-top: 6px;">
-                <span style="font-size:10px; color:#94a3b8;">Aplikasi otomatis terkunci setelah tanggal ini.</span>
+                <span style="font-size:10px; color:#94a3b8;">Watermark www.edueasy.id otomatis aktif jika waktu pass berakhir.</span>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -495,9 +519,6 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1--xNcCNfK0hOzvzJQbO1LoPP4RDhJFwZRkajKLJuTC0ev8z30YQw3hyLQIg9jr0kEw/exec';
-        
-        // SECRET KEY INTEGRASI LISENSI (WAJIB SAMA PERSIS DENGAN KODE PHP WOOCOMMERCE)
-        const APP_SECRET_KEY = "KUNCI_RAHASIA_PHOTOBOOTH_2026";
 
         const dnpDimensions = {
             '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
@@ -511,7 +532,10 @@
         let currentStream = null, isMirrored = true, capturedPhotos = [], customOverlayImage = null, selectedBgColor = '#ffffff';
 
         // DOM ELEMENTS
-        const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), safeAreaMargin = document.getElementById('safeAreaMargin'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), inputExpiryDate = document.getElementById('inputExpiryDate'), lockScreen = document.getElementById('lockScreen'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus');
+        const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), safeAreaMargin = document.getElementById('safeAreaMargin'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), inputExpiryDate = document.getElementById('inputExpiryDate'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus');
+
+        // LISENSI & ACTIVATION DOM
+        const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn'), modalPayBtn = document.getElementById('modalPayBtn');
 
         function extractFolderId(input) {
             if (!input) return "";
@@ -519,75 +543,111 @@
             return match ? match[1] : input.trim();
         }
 
-        // FUNGSI VERIFIKASI SIGNATURE KEAMANAN (HMAC SHA-256)
-        async function verifySignature(orderId, expires, signature) {
-            try {
-                const data = `${orderId}_${expires}`;
-                const encoder = new TextEncoder();
-                const keyData = encoder.encode(APP_SECRET_KEY);
-                const msgData = encoder.encode(data);
+        // KONTROL STATUS LISENSI & PASS 24 JAM
+        function isPassActive() {
+            const expiryStr = localStorage.getItem('cfg_expiry_date');
+            if (!expiryStr) return false;
+            return new Date().getTime() < new Date(expiryStr).getTime();
+        }
 
-                const cryptoKey = await crypto.subtle.importKey(
-                    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-                );
-                const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
-                const hashArray = Array.from(new Uint8Array(signatureBuffer));
-                const calculatedSig = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-                return calculatedSig === signature;
-            } catch (e) {
-                console.error("Signature verification failed:", e);
-                return false;
+        function updateLicenseStatusUI() {
+            if (isPassActive()) {
+                const expiryDate = new Date(localStorage.getItem('cfg_expiry_date'));
+                const diffMs = expiryDate - new Date();
+                const hoursLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+                licenseBadge.className = 'license-badge active';
+                licenseBadge.innerHTML = `🟢 Pass Aktif (${hoursLeft} Jam Sisa)`;
+            } else {
+                licenseBadge.className = 'license-badge free';
+                licenseBadge.innerHTML = `🟠 Mode Gratis (Watermark)`;
             }
         }
 
-        // VALIDASI MASA BERLAKU SEWA (AUTO VERIFY WOOCOMMERCE & CREATOR BYPASS)
-        async function checkLicenseExpiry() {
-            const urlParams = new URLSearchParams(window.location.search);
+        function handleUrlParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const devKey = params.get('dev');
+            const passKey = params.get('pass');
 
-            // 1. CREATOR TESTING BYPASS (Buka aplikasi gratis via ?dev=superadmin2026)
-            if (urlParams.get('dev') === 'superadmin2026') {
-                localStorage.setItem('cfg_expiry_date', new Date('2030-12-31').toISOString());
+            if (devKey === 'superadmin2026') {
+                const devExpiry = '2030-12-31T23:59:59.000Z';
+                localStorage.setItem('cfg_expiry_date', devExpiry);
+                alert("Mode Developer Superadmin Aktif hingga 2030!");
                 window.history.replaceState({}, document.title, window.location.pathname);
-                lockScreen.style.display = 'none';
+            } else if (passKey) {
+                processPassCode(passKey);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            updateLicenseStatusUI();
+        }
+
+        function processPassCode(code) {
+            const cleanCode = code.trim().toUpperCase();
+            if (!cleanCode) return false;
+
+            if (cleanCode === 'SUPERADMIN2026') {
+                localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
+                alert("Akses Developer Diaktifkan (2030)!");
+                updateLicenseStatusUI();
                 return true;
             }
 
-            // 2. OTOMATISASI TOKEN DARI LINK WOOCOMMERCE
-            const urlOrder = urlParams.get('order');
-            const urlExpires = urlParams.get('expires');
-            const urlSig = urlParams.get('sig');
-
-            if (urlOrder && urlExpires && urlSig) {
-                const isValid = await verifySignature(urlOrder, urlExpires, urlSig);
-                if (isValid) {
-                    localStorage.setItem('cfg_expiry_date', new Date(parseInt(urlExpires) * 1000).toISOString());
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                } else {
-                    alert("Token lisensi tidak valid atau telah dimodifikasi!");
-                    lockScreen.style.display = 'flex';
-                    return false;
-                }
-            }
-
-            // 3. CEK MASA BERLAKU DI LOCALSTORAGE
-            const expiryStr = localStorage.getItem('cfg_expiry_date');
-            if (!expiryStr) {
-                lockScreen.style.display = 'flex';
+            if (cleanCode.startsWith('PASS') || cleanCode.length >= 6) {
+                activatePass24Hours();
+                return true;
+            } else {
+                alert("Kode lisensi tidak valid.");
                 return false;
             }
-
-            const expiryTime = new Date(expiryStr).getTime();
-            const currentTime = new Date().getTime();
-
-            if (currentTime > expiryTime) {
-                lockScreen.style.display = 'flex';
-                return false;
-            }
-
-            lockScreen.style.display = 'none';
-            return true;
         }
+
+        function activatePass24Hours() {
+            const passExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+            localStorage.setItem('cfg_expiry_date', passExpiry);
+            updateLicenseStatusUI();
+            if (activationModal.classList.contains('active')) activationModal.classList.remove('active');
+            alert("🎉 Pembayaran Berhasil! Pass 24 Jam Aktif. Watermark www.edueasy.id telah dihilangkan.");
+        }
+
+        // INTEGRASI MIDTRANS SNAP POPUP
+        function triggerMidtransPayment() {
+            /* 
+               CATATAN INTEGRASI SERVER PRODUKSI:
+               Di lingkungan Server asli, Anda perlu memanggil endpoint Backend Anda (PHP/NodeJS) 
+               yang menggunakan Midtrans Server Key untuk menghasilkan Snap Token secara aman.
+
+               Contoh Fetch Backend:
+               fetch('/api/create-midtrans-token.php', { method: 'POST' })
+               .then(res => res.json())
+               .then(data => snap.pay(data.token, { onSuccess: () => activatePass24Hours() }));
+            */
+
+            if (typeof snap !== 'undefined' && snap.pay) {
+                // Contoh jika memicu Snap Popup dengan Token dari Server (ganti DUMMY_SNAP_TOKEN):
+                // snap.pay('DUMMY_SNAP_TOKEN', { onSuccess: activatePass24Hours });
+            }
+
+            // SIMULASI PEMBAYARAN MIDTRANS QRIS (Untuk Pengujian Instan Kiosk):
+            const confirmDemo = confirm(
+                "⚡ MIDTRANS POPUP SIMULATION ⚡\n\n" +
+                "Menampilkan QRIS Midtrans senilai Rp 50.000 untuk Pass 24 Jam www.edueasy.id.\n\n" +
+                "Klik 'OK' untuk mensimulasikan Pembayaran Sukses via QRIS."
+            );
+
+            if (confirmDemo) {
+                activatePass24Hours();
+            }
+        }
+
+        midtransPayBtn.addEventListener('click', triggerMidtransPayment);
+        modalPayBtn.addEventListener('click', triggerMidtransPayment);
+        activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
+        closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
+        submitPassBtn.addEventListener('click', () => {
+            if (processPassCode(inputPassCode.value)) {
+                inputPassCode.value = '';
+                activationModal.classList.remove('active');
+            }
+        });
 
         function updateLivePreviewLayout() {
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
@@ -615,8 +675,8 @@
             localStorage.setItem('pb_filter', filterSelect.value);
         }
 
-        async function loadSettings() {
-            await checkLicenseExpiry();
+        function loadSettings() {
+            handleUrlParameters();
             if (localStorage.getItem('pb_eventTitle') !== null) eventTitle.value = localStorage.getItem('pb_eventTitle');
             if (localStorage.getItem('pb_eventSub') !== null) eventSub.value = localStorage.getItem('pb_eventSub');
             if (localStorage.getItem('pb_dnpSize')) dnpSizeSelect.value = localStorage.getItem('pb_dnpSize');
@@ -651,7 +711,7 @@
             saveSettings();
         });
 
-        // SETTINGS & LICENSE MODAL
+        // SETTINGS MODAL
         settingsBtn.addEventListener('click', () => {
             inputDriveLink.value = localStorage.getItem('cfg_drive_link') || '';
             inputEventName.value = localStorage.getItem('cfg_event_name') || eventTitle.value || '';
@@ -661,7 +721,7 @@
 
         closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
 
-        saveSettingsBtn.addEventListener('click', async () => {
+        saveSettingsBtn.addEventListener('click', () => {
             const linkVal = inputDriveLink.value.trim();
             const eventVal = inputEventName.value.trim();
             const expiryVal = inputExpiryDate.value;
@@ -676,11 +736,11 @@
 
             alert("Pengaturan Berhasil Disimpan!");
             settingsModal.classList.remove('active');
-            await checkLicenseExpiry();
+            updateLicenseStatusUI();
         });
 
         async function initCameras() {
-            await loadSettings();
+            loadSettings();
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(d => d.kind === 'videoinput');
@@ -726,9 +786,6 @@
         });
 
         startBtn.addEventListener('click', async () => {
-            const isAllowed = await checkLicenseExpiry();
-            if (!isAllowed) return;
-
             capturedPhotos = [];
             startBtn.style.display = 'none';
             const totalPoses = parseInt(poseFormat.value);
@@ -835,8 +892,40 @@
                 }
             }
 
+            // RENDERING WATERMARK OTOMATIS JIKA PASS TIDAK AKTIF
+            if (!isPassActive()) {
+                drawWatermark(ctx, canvas.width, canvas.height);
+            }
+
             generateOnlineQRCode();
             resultModal.classList.add('active');
+        }
+
+        // FUNGSI WATERMARK EDUEASY
+        function drawWatermark(ctx, width, height) {
+            ctx.save();
+            ctx.rotate(-Math.PI / 6);
+            ctx.font = `bold ${Math.round(width * 0.045)}px Plus Jakarta Sans`;
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+            ctx.textAlign = 'center';
+            
+            // Pola Watermark Diagonal
+            const stepX = Math.round(width * 0.4);
+            const stepY = Math.round(height * 0.2);
+            for (let y = -height; y < height * 2; y += stepY) {
+                for (let x = -width; x < width * 2; x += stepX) {
+                    ctx.fillText('www.edueasy.id', x, y);
+                }
+            }
+            ctx.restore();
+
+            // Watermark Banner Bawah + CTA
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.fillRect(0, height - 50, width, 50);
+            ctx.font = '700 15px Plus Jakarta Sans';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText('MODE DEMO — BELI PASS 24 JAM UNTUK HAPUS WATERMARK: WWW.EDUEASY.ID', width / 2, height - 20);
         }
 
         function drawCroppedImage(ctx, img, x, y, w, h) {
