@@ -214,31 +214,31 @@
         }
 
         /* CAMERA DISPLAY STAGE */
-        .stage-container {
-            background: #000;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--panel-border);
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            min-height: 480px;
-            padding: 16px;
-        }
+.stage-container {
+    background: #000;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--panel-border);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    min-height: 520px;
+    padding: 20px;
+}
 
-        .camera-wrapper {
-            position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            border-radius: 12px;
-            overflow: hidden;
-            background: #090d16;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            max-height: 70vh;
-            width: 100%;
-        }
+.camera-wrapper {
+    position: relative;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #090d16;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease; /* Transisi halus saat berganti orientasi */
+}
 
         video {
             width: 100%;
@@ -649,21 +649,36 @@
             }
         });
 
-        function updateLivePreviewLayout() {
-            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
-            cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
+function updateLivePreviewLayout() {
+    const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+    const ratio = config.w / config.h;
 
-            const marginPx = parseInt(safeAreaMargin.value) || 0;
-            const percentX = (marginPx / config.w) * 100;
-            const percentY = (marginPx / config.h) * 100;
+    cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
 
-            safeZoneGuide.style.top = `${percentY}%`;
-            safeZoneGuide.style.bottom = `${percentY}%`;
-            safeZoneGuide.style.left = `${percentX}%`;
-            safeZoneGuide.style.right = `${percentX}%`;
+    // Penyesuaian Dinamis Portrait & Landscape untuk Desktop
+    if (config.isPortrait) {
+        cameraWrapper.style.height = '62vh';
+        cameraWrapper.style.width = `calc(62vh * ${ratio})`;
+        cameraWrapper.style.maxWidth = '100%';
+        cameraWrapper.style.maxHeight = 'none';
+    } else {
+        cameraWrapper.style.width = '100%';
+        cameraWrapper.style.height = 'auto';
+        cameraWrapper.style.maxHeight = '62vh';
+        cameraWrapper.style.maxWidth = '100%';
+    }
 
-            saveSettings();
-        }
+    const marginPx = parseInt(safeAreaMargin.value) || 0;
+    const percentX = (marginPx / config.w) * 100;
+    const percentY = (marginPx / config.h) * 100;
+
+    safeZoneGuide.style.top = `${percentY}%`;
+    safeZoneGuide.style.bottom = `${percentY}%`;
+    safeZoneGuide.style.left = `${percentX}%`;
+    safeZoneGuide.style.right = `${percentX}%`;
+
+    saveSettings();
+}
 
         function saveSettings() {
             localStorage.setItem('pb_eventTitle', eventTitle.value);
