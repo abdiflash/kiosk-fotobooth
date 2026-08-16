@@ -721,23 +721,29 @@
 
         closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
 
-        saveSettingsBtn.addEventListener('click', () => {
-            const linkVal = inputDriveLink.value.trim();
-            const eventVal = inputEventName.value.trim();
-            const expiryVal = inputExpiryDate.value;
+saveSettingsBtn.addEventListener('click', () => {
+    const linkVal = inputDriveLink.value.trim();
+    const eventVal = inputEventName.value.trim();
+    const expiryVal = inputExpiryDate.value;
 
-            if (!linkVal) { alert("Link Folder Drive Wajib Diisi!"); return; }
+    if (!linkVal) { alert("Link Folder Drive Wajib Diisi!"); return; }
 
-            localStorage.setItem('cfg_drive_link', linkVal);
-            localStorage.setItem('cfg_event_name', eventVal || 'Event Photobooth');
-            if (expiryVal) localStorage.setItem('cfg_expiry_date', expiryVal);
+    localStorage.setItem('cfg_drive_link', linkVal);
+    localStorage.setItem('cfg_event_name', eventVal || 'Event Photobooth');
 
-            if (eventVal) { eventTitle.value = eventVal; saveSettings(); }
+    // LOGIKA PERBAIKAN: Jika tanggal diisi -> simpan; Jika dikosongkan -> hapus lisensi (kembali ke Mode Gratis)
+    if (expiryVal) {
+        localStorage.setItem('cfg_expiry_date', expiryVal);
+    } else {
+        localStorage.removeItem('cfg_expiry_date');
+    }
 
-            alert("Pengaturan Berhasil Disimpan!");
-            settingsModal.classList.remove('active');
-            updateLicenseStatusUI();
-        });
+    if (eventVal) { eventTitle.value = eventVal; saveSettings(); }
+
+    alert("Pengaturan Berhasil Disimpan!");
+    settingsModal.classList.remove('active');
+    updateLicenseStatusUI();
+});
 
         async function initCameras() {
             loadSettings();
