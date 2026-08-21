@@ -491,7 +491,7 @@
                 <div class="segmented-control">
                     <button id="mode1Btn" class="seg-btn active">📱 Mode 1</button>
                     <button id="mode2Btn" class="seg-btn">🤳 Mode 2</button>
-                    <button id="demoBtn" class="seg-btn demo">⚡ Demo 30M</button>
+                    <button id="demoBtn" class="seg-btn demo">⚡ Demo 10M</button>
                 </div>
             </div>
 
@@ -915,10 +915,10 @@
         if (demoBtn) {
             demoBtn.addEventListener('click', () => {
                 setActiveModeBtn(demoBtn);
-                const demoExpiry = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+                const demoExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
                 localStorage.setItem('cfg_expiry_date', demoExpiry);
                 updateLicenseStatusUI();
-                alert("⚡ DEMO Mode Active for 30 Minutes! Watermark disabled.");
+                alert("⚡ DEMO Mode Active for 10 Minutes! Watermark disabled.");
             });
         }
 
