@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk Photobooth Pro 19.0</title>
+    <title>Kiosk Photobooth Pro 19.1</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -485,7 +485,7 @@
         <!-- ROW 1: BRANDING & EVENT SETTINGS -->
         <div class="header-top">
             <div class="brand-title">
-                📁 KIOSK PHOTOBOOTH PRO 19.0
+                📁 KIOSK PHOTOBOOTH PRO 19.1
             </div>
             <div class="top-actions">
                 <span id="queueBadge" class="license-badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); display: none;">🔄 Queue: 0</span>
@@ -496,11 +496,11 @@
 
         <!-- ROW 2: GROUPED CONTROL TOOLBAR -->
         <div class="toolbar-grid">
-            <!-- 1. QUICK MODES (SEGMENTED CONTROL) -->
+            <!-- 1. QUICK MODES (SEGMENTED CONTROL - BOTH INITIALLY OFF) -->
             <div class="tool-card">
                 <span class="tool-label">Quick Mode Preset</span>
                 <div class="segmented-control">
-                    <button id="mode1Btn" class="seg-btn active">📱 Mode 1</button>
+                    <button id="mode1Btn" class="seg-btn">📱 Mode 1</button>
                     <button id="mode2Btn" class="seg-btn">🤳 Mode 2</button>
                 </div>
             </div>
@@ -951,7 +951,6 @@
                 return true;
             }
 
-            // RAHASIA TESTING 30 MENIT
             if (cleanCode === 'TEST30M' || cleanCode === 'TEST30MIN') {
                 addPassMinutes(30);
                 alert("🎉 Passcode Rahasia Testing 30 Menit Berhasil Diaktifkan! Watermark dinonaktifkan.");
@@ -1073,7 +1072,7 @@
 
         function setActiveModeBtn(selectedBtn) {
             [mode1Btn, mode2Btn].forEach(b => b.classList.remove('active'));
-            selectedBtn.classList.add('active');
+            if (selectedBtn) selectedBtn.classList.add('active');
         }
 
         if (mode1Btn) {
@@ -1085,7 +1084,6 @@
                 webcam.classList.remove('mirrored');
                 updateLivePreviewLayout();
                 startCamera(null, 'environment');
-                alert("📱 MODE 1 Active:\n• Rear Camera\n• 5R Portrait Size\n• Direct Capture (No Countdown)");
             });
         }
 
@@ -1098,7 +1096,6 @@
                 webcam.classList.add('mirrored');
                 updateLivePreviewLayout();
                 startCamera(null, 'user');
-                alert("🤳 MODE 2 Active:\n• Front Camera\n• 5R Portrait Size\n• 3 Seconds Countdown");
             });
         }
 
@@ -1226,32 +1223,45 @@
             } catch (err) { alert('Failed to detect cameras: ' + err.message); }
         }
 
+        // IMPROVED ROBUST CAMERA ACCESS FOR MOBILE (RESOLVES MODE 1 OVERCONSTRAINED ERROR)
         async function startCamera(deviceId, facingMode = null) {
-            if (currentStream) currentStream.getTracks().forEach(t => t.stop());
-            
-            let videoConstraints = { 
-                width: { ideal: 1920, min: 1280 }, 
-                height: { ideal: 1080, min: 720 },
-                advanced: [{ focusMode: "continuous" }]
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+            webcam.srcObject = null;
+
+            // Step 1: Flexible primary constraints without rigid min/max limits
+            let primaryConfig = {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
             };
 
             if (facingMode) {
-                videoConstraints.facingMode = { ideal: facingMode };
+                primaryConfig.facingMode = { ideal: facingMode };
             } else if (deviceId) {
-                videoConstraints.deviceId = { exact: deviceId };
+                primaryConfig.deviceId = { exact: deviceId };
             }
 
             try {
-                currentStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: primaryConfig });
                 webcam.srcObject = currentStream;
             } catch (err) {
+                console.warn("Primary camera request failed, attempting fallback:", err);
                 try {
-                    const fallbackConfig = facingMode ? { facingMode: facingMode } : { deviceId: deviceId ? { exact: deviceId } : true };
+                    // Step 2: Fallback with minimal requirement
+                    let fallbackConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
                     currentStream = await navigator.mediaDevices.getUserMedia({ video: fallbackConfig });
                     webcam.srcObject = currentStream;
                 } catch (fallbackErr) {
-                    console.error("Camera error:", fallbackErr);
-                    alert('Failed to access camera: ' + fallbackErr.message);
+                    try {
+                        // Step 3: Generic video fallback
+                        currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        webcam.srcObject = currentStream;
+                    } catch (finalErr) {
+                        console.error("Camera access failed completely:", finalErr);
+                        alert('Failed to access camera: ' + finalErr.message);
+                    }
                 }
             }
         }
