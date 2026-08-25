@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk Photobooth Pro 22.0</title>
+    <title>Kiosk Photobooth Pro 22.1</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Local Libraries (Offline Ready) -->
-    <script src="libs/jszip.min.js"></script>
-    <script src="libs/FileSaver.min.js"></script>
-    <script src="libs/qrcode.min.js"></script>
+    <!-- Reliable Online CDN Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- MIDTRANS SNAP SCRIPT (PRODUCTION MODE) -->
+    <!-- MIDTRANS SNAP SCRIPT -->
     <script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-MK-5yLAVCdP0Yd_o"></script>
 
     <style id="dynamicPrintStyle">
@@ -55,7 +55,6 @@
             touch-action: manipulation;
         }
 
-        /* HEADER UI REDESIGN */
         header.app-header {
             background: #0f172a;
             border-bottom: 1px solid var(--panel-border);
@@ -66,7 +65,6 @@
             z-index: 20;
         }
 
-        /* ROW 1: BRAND & EVENT SETTING */
         .header-top {
             display: flex;
             justify-content: space-between;
@@ -121,7 +119,6 @@
         .license-badge.free { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         .license-badge.active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
 
-        /* ROW 2 & 3: GRID TOOLBAR */
         .toolbar-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -148,7 +145,6 @@
             letter-spacing: 0.05em;
         }
 
-        /* SEGMENTED CONTROL FOR MODES */
         .segmented-control {
             display: flex;
             background: #1e293b;
@@ -182,7 +178,6 @@
             box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
         }
 
-        /* ACTION BUTTON GROUPS */
         .btn-group {
             display: flex;
             gap: 6px;
@@ -213,7 +208,6 @@
         .btn-pass { background: #059669; color: #fff; }
         .btn-pass:hover { background: #047857; }
 
-        /* HARDWARE CONTROLS */
         .cam-select {
             flex: 1.5;
             background: #1e293b;
@@ -242,7 +236,6 @@
         }
         .btn-icon:hover { background: #334155; }
 
-        /* MAIN LAYOUT */
         main {
             flex: 1;
             display: grid;
@@ -291,7 +284,6 @@
             width: 100%;
         }
 
-        /* COLOR PICKER */
         .color-picker-wrapper {
             display: flex;
             align-items: center;
@@ -333,7 +325,6 @@
             background: none;
         }
 
-        /* CAMERA STAGE */
         .stage-container {
             background: #000;
             border-radius: var(--radius-lg);
@@ -386,7 +377,6 @@
             z-index: 5;
         }
 
-        /* FLASH & COUNTDOWN */
         .flash-overlay {
             position: absolute;
             inset: 0; background: #ffffff;
@@ -417,7 +407,6 @@
         .btn-capture:active { transform: scale(0.96); }
         .btn-capture:hover { background: var(--accent-hover); }
 
-        /* MODALS */
         .modal {
             position: fixed; inset: 0;
             background: rgba(4, 7, 13, 0.88);
@@ -448,10 +437,10 @@
         .qr-card {
             background: #ffffff; padding: 14px; border-radius: var(--radius-md);
             display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+            min-height: 180px; justify-content: center;
         }
-        .qr-card p { color: #0f172a; font-size: 0.7rem; font-weight: 700; }
+        .qr-card p { color: #0f172a; font-size: 0.72rem; font-weight: 800; word-break: break-word; }
 
-        /* RESPONSIVE TABLET & MOBILE FIXES */
         @media (max-width: 992px) {
             main { grid-template-columns: 1fr; }
             .modal-card { flex-direction: column; max-height: 95vh; }
@@ -482,10 +471,9 @@
 
     <!-- NAVBAR HEADER -->
     <header class="app-header">
-        <!-- ROW 1: BRANDING & EVENT SETTINGS -->
         <div class="header-top">
             <div class="brand-title">
-                📁 KIOSK PHOTOBOOTH PRO 22.0
+                📁 KIOSK PHOTOBOOTH PRO 22.1
             </div>
             <div class="top-actions">
                 <span id="queueBadge" class="license-badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); display: none;">🔄 Queue: 0</span>
@@ -494,9 +482,7 @@
             </div>
         </div>
 
-        <!-- ROW 2: GROUPED CONTROL TOOLBAR -->
         <div class="toolbar-grid">
-            <!-- 1. QUICK MODES (SEGMENTED CONTROL - BOTH INITIALLY OFF) -->
             <div class="tool-card">
                 <span class="tool-label">Quick Mode Preset</span>
                 <div class="segmented-control">
@@ -505,7 +491,6 @@
                 </div>
             </div>
 
-            <!-- 2. MONETIZATION & PASS CODE -->
             <div class="tool-card">
                 <span class="tool-label">License & Pass Code</span>
                 <div class="btn-group">
@@ -514,7 +499,6 @@
                 </div>
             </div>
 
-            <!-- 3. HARDWARE & DISPLAY -->
             <div class="tool-card">
                 <span class="tool-label">Camera & Screen</span>
                 <div class="btn-group">
@@ -528,7 +512,6 @@
 
     <!-- MAIN INTERFACE -->
     <main>
-        <!-- SIDEBAR CONTROLS -->
         <aside class="sidebar">
             <div class="setting-card">
                 <label>Print Size (Standard DNP Printer)</label>
@@ -591,7 +574,6 @@
             </div>
         </aside>
 
-        <!-- CAMERA DISPLAY STAGE -->
         <section class="stage-container">
             <div class="flash-overlay" id="flashElem"></div>
             <div class="countdown-overlay" id="countdownElem">3</div>
@@ -624,7 +606,7 @@
                 
                 <div class="qr-card">
                     <p id="qrStatus">PREPARING DIGITAL QR...</p>
-                    <div id="qrcode"></div>
+                    <div id="qrcode" style="margin-top: 6px;"></div>
                 </div>
 
                 <button id="closeModalBtn" style="background: #dc2626; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: auto;">❌ Finish & Reset</button>
@@ -674,7 +656,6 @@
                 <div style="padding: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
                     <span id="passStatusText" style="font-weight: 600; font-size: 0.85rem;">Checking status...</span>
                 </div>
-                <span style="font-size:10px; color:#94a3b8; display: block; margin-top: 6px;">*Active time stacks cumulatively based on license hours.</span>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -710,10 +691,7 @@
         // DOM ELEMENTS
         const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), safeAreaMargin = document.getElementById('safeAreaMargin'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), passStatusText = document.getElementById('passStatusText'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus'), queueBadge = document.getElementById('queueBadge');
 
-        // LICENSE DOM
         const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn');
-
-        // MODE BUTTON DOM
         const mode1Btn = document.getElementById('mode1Btn'), mode2Btn = document.getElementById('mode2Btn');
 
         // --- INDEXEDDB OFFLINE QUEUE SYSTEM ---
@@ -827,7 +805,6 @@
             }
         }
 
-        // --- KIOSK LOCK MODE & SECURITY ---
         function initKioskLockdown() {
             document.addEventListener('contextmenu', e => e.preventDefault());
             document.addEventListener('dragstart', e => e.preventDefault());
@@ -942,7 +919,7 @@
 
             if (cleanCode === 'TEST30M' || cleanCode === 'TEST30MIN') {
                 addPassMinutes(30);
-                alert("🎉 Passcode Rahasia Testing 30 Menit Berhasil Diaktifkan! Watermark dinonaktifkan.");
+                alert("🎉 Passcode Testing 30 Menit Berhasil Diaktifkan!");
                 return true;
             }
 
@@ -964,7 +941,7 @@
 
             if (checksum === calculatedChecksum) {
                 addPassHours(hours);
-                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours. Watermark disabled.`);
+                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
                 return true;
             } else {
                 alert("Invalid License Code.");
@@ -994,7 +971,7 @@
             addPassHours(hoursToAdd);
 
             if (activationModal.classList.contains('active')) activationModal.classList.remove('active');
-            alert(`🎉 Payment Successful! Duration added: +${hoursToAdd} Hours. Watermark disabled.`);
+            alert(`🎉 Payment Successful! Duration added: +${hoursToAdd} Hours.`);
         }
 
         async function triggerMidtransPayment() {
@@ -1044,7 +1021,6 @@
             }
         }
 
-        // EVENT LISTENERS
         if (midtransPayBtn) midtransPayBtn.addEventListener('click', triggerMidtransPayment);
         if (activatePassBtn) activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
         if (closeActivationBtn) closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
@@ -1212,7 +1188,6 @@
             } catch (err) { alert('Failed to detect cameras: ' + err.message); }
         }
 
-        // 1. KOREKSI startCamera() - PAKSA RESOLUSI TINGGI (FULL HD / 4K) DENGAN FALLBACK AMAN
         async function startCamera(deviceId, facingMode = null) {
             if (currentStream) {
                 currentStream.getTracks().forEach(t => t.stop());
@@ -1220,7 +1195,6 @@
             }
             webcam.srcObject = null;
 
-            // Meminta resolusi 4K / Full HD secara ideal
             let primaryConfig = {
                 width: { ideal: 3840, min: 1920 },
                 height: { ideal: 2160, min: 1080 }
@@ -1408,8 +1382,8 @@
                 drawWatermark(ctx, canvas.width, canvas.height);
             }
 
-            generateOnlineQRCode();
             resultModal.classList.add('active');
+            generateOnlineQRCode();
         }
 
         function drawWatermark(ctx, width, height) {
@@ -1450,33 +1424,54 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        // 2. KOREKSI generateOnlineQRCode() - TAMPIL INSTAN (0 DETIK) & UPLOAD HIGH-RES DI BACKGROUND
+        // FUNGSI PERBAIKAN TOTAL UNTUK GENERATE QR CODE & UPLOAD DRIVE
         async function generateOnlineQRCode() {
             const rawDriveLink = localStorage.getItem('cfg_drive_link') || "";
             const activeFolderId = extractFolderId(rawDriveLink);
-            const activeEventName = localStorage.getItem('cfg_event_name') || "Photobooth Event";
+            const activeEventName = localStorage.getItem('cfg_event_name') || eventTitle.value || "Photobooth Event";
 
             if (!activeFolderId) {
-                qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px;">Folder ID Not Set!</span>';
-                qrStatus.textContent = "INCOMPLETE SETTINGS";
+                qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:bold;">⚠️ Link Drive Belum Diisi!</span>';
+                qrStatus.textContent = "DRIVE FOLDER BELUM SET";
                 return;
             }
 
-            // A. TAMPILKAN QR CODE LANGSUNG SEKETIKA (0 DETIK) KE FOLDER DRIVE
             const folderUrl = `https://drive.google.com/drive/folders/${activeFolderId}`;
-            qrcodeContainer.innerHTML = '';
-            new QRCode(qrcodeContainer, { 
-                text: folderUrl, 
-                width: 120, 
-                height: 120, 
-                correctLevel: QRCode.CorrectLevel.L 
-            });
-            qrStatus.textContent = "SCAN UNTUK AKSES DRIVE";
 
-            // B. PROSES KOMPRESI & UPLOAD FOTO HIGH-RES DI BACKGROUND (TIDAK MEMBLOKIR QR)
-            setTimeout(async () => {
+            // 1. GENERATE QR CODE (PAKAI LIBRARY LOKAL/CDN DENGAN FALLBACK API AMAN)
+            qrcodeContainer.innerHTML = '';
+            let qrRendered = false;
+
+            if (typeof QRCode !== 'undefined') {
+                try {
+                    new QRCode(qrcodeContainer, { 
+                        text: folderUrl, 
+                        width: 120, 
+                        height: 120, 
+                        correctLevel: QRCode.CorrectLevel.L 
+                    });
+                    qrRendered = true;
+                } catch (e) {
+                    console.warn("QRCode JS Render Warning, switching to Image API Fallback:", e);
+                }
+            }
+
+            if (!qrRendered) {
+                const qrImg = document.createElement('img');
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(folderUrl)}`;
+                qrImg.style.width = '120px';
+                qrImg.style.height = '120px';
+                qrImg.style.borderRadius = '4px';
+                qrImg.alt = 'QR Code Drive';
+                qrcodeContainer.appendChild(qrImg);
+            }
+
+            qrStatus.textContent = "🔄 MENGUNGGAH KE DRIVE...";
+
+            // 2. PROSES UPLOAD FOTO HIGH-RES KE GOOGLE DRIVE
+            try {
                 const webCanvas = document.createElement('canvas');
-                const targetW = 1600; // Lebar High-Resolution 1600px
+                const targetW = 1600;
                 const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
                 webCanvas.width = targetW; 
                 webCanvas.height = targetH;
@@ -1486,31 +1481,40 @@
                 webCtx.imageSmoothingQuality = 'high';
                 webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
                 
-                // Kompresi JPEG 85% untuk kualitas tajam namun ringan di upload
                 const base64Image = webCanvas.toDataURL('image/jpeg', 0.85);
 
                 if (!navigator.onLine) {
                     await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
-                    qrStatus.textContent = "📦 TERSIMPAN OFFLINE";
+                    qrStatus.textContent = "📦 OFFLINE (TERSIPAN DI QUEUE)";
                     return;
                 }
 
-                try {
-                    const res = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName })
-                    });
-                    const data = await res.json();
-                    if (data.status === 'success') {
-                        qrStatus.textContent = "✅ FOTO TERKIRIM KE DRIVE";
-                    } else throw new Error(data.message);
-                } catch (err) {
-                    console.warn("Upload background error, saved to queue:", err);
-                    await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
-                    qrStatus.textContent = "📦 TERSIMPAN DI QUEUE";
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        image: base64Image,
+                        masterFolderId: activeFolderId,
+                        eventName: activeEventName
+                    })
+                });
+
+                const data = await res.json();
+                if (data.status === 'success') {
+                    qrStatus.textContent = "✅ FOTO TERKIRIM KE DRIVE";
+                } else {
+                    throw new Error(data.message || "Gagal mengunggah");
                 }
-            }, 100);
+            } catch (err) {
+                console.error("Upload Drive Error:", err);
+                try {
+                    const base64Image = outputCanvas.toDataURL('image/jpeg', 0.85);
+                    await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
+                    qrStatus.textContent = "📦 TERSIMPAN DI QUEUE (AKAN DIPROSES)";
+                } catch (e) {
+                    qrStatus.textContent = "❌ GAGAL UPLOAD";
+                }
+            }
         }
 
         if (printBtn) {
