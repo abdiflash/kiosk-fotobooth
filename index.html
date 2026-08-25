@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIOSK PHOTOBOOTH PRO 20.0</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --panel-bg: #111827;
+            --card-bg: #1e293b;
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-title: #f8fafc;
+            --text-body: #94a3b8;
+            --radius-md: 8px;
+            --radius-lg: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-title);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Navigation Bar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+            color: var(--text-title);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.expired {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn {
+            background: var(--card-bg);
+            color: #fff;
+            border: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover { background: #334155; }
+        .btn-blue { background: #2563eb; border-color: #3b82f6; }
+        .btn-blue:hover { background: #1d4ed8; }
+        .btn-green { background: #059669; border-color: #10b981; }
+        .btn-green:hover { background: #047857; }
+
+        /* Main Workspace Layout */
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* Sidebar Controls */
+        .sidebar {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-body);
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-title);
+        }
+
+        select, input[type="text"], input[type="file"], input[type="range"] {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--panel-border);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .color-swatches {
+            display: flex;
+            gap: 8px;
+        }
+
+        .swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .swatch.active { border-color: #fff; }
+
+        /* Camera Viewfinder Area */
+        .viewport-container {
+            background: #000;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            min-height: 500px;
+        }
+
+        .camera-top-bar {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .viewfinder {
+            position: relative;
+            width: 320px;
+            height: 480px;
+            background: #1e293b;
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .watermark-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            color: #ef4444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .btn-capture {
+            position: absolute;
+            bottom: 24px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+
+        .btn-capture:hover { transform: scale(1.05); }
+
+        /* Modal styling */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-backdrop.active { display: flex; }
+
+        .modal {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+        }
+
+        .modal h2 { font-size: 1.1rem; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            📁 KIOSK PHOTOBOOTH PRO 20.0
+        </div>
+        <div class="header-actions">
+            <div id="licenseBadge" class="status-badge expired">
+                ● Watermark Mode (Expired)
+            </div>
+            <button class="btn btn-blue" id="buyPassBtn">🔍 Buy Pass (QRIS)</button>
+            <button class="btn btn-green" id="enterPassBtn">🔑 Enter Pass</button>
+            <button class="btn">⚙️ Event Settings</button>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <!-- Control Panel Left -->
+        <div class="sidebar">
+            <div>
+                <div class="section-title">Quick Mode Preset</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" style="flex:1;">📱 Mode 1</button>
+                    <button class="btn" style="flex:1;">🤳 Mode 2</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">License & Pass Code</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-blue" style="flex:1;" onclick="document.getElementById('buyPassBtn').click()">🔍 Buy Pass</button>
+                    <button class="btn btn-green" style="flex:1;" onclick="document.getElementById('enterPassBtn').click()">🔑 Enter Pass</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>PRINT SIZE (STANDARD DNP PRINTER)</label>
+                <select>
+                    <option>5R Portrait (5x7")</option>
+                    <option>4R Strip (2x6")</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>NUMBER OF POSES / PHOTOS</label>
+                <select>
+                    <option>1 Pose (Single Photo)</option>
+                    <option>3 Poses Strip</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>MARGIN / SAFE AREA (PX)</label>
+                <input type="range" min="0" max="50" value="10">
+            </div>
+
+            <div class="form-group">
+                <label>BACKGROUND STRIP COLOR</label>
+                <div class="color-swatches">
+                    <div class="swatch active" style="background: #fff;"></div>
+                    <div class="swatch" style="background: #000;"></div>
+                    <div class="swatch" style="background: #ec4899;"></div>
+                    <div class="swatch" style="background: #3b82f6;"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>FRAME OVERLAY (TRANSPARENT PNG)</label>
+                <input type="file" accept="image/png">
+            </div>
+
+            <div class="form-group">
+                <label>EVENT TITLE / HEADER (OPTIONAL)</label>
+                <input type="text" placeholder="Leave empty if present in PNG overlay">
+            </div>
+
+            <div class="form-group">
+                <label>SUBTITLE (OPTIONAL)</label>
+                <input type="text" placeholder="Subtitle (Optional)">
+            </div>
+
+            <div class="form-group">
+                <label>VISUAL FILTER EFFECTS</label>
+                <select>
+                    <option>Normal (Original)</option>
+                    <option>Black & White</option>
+                    <option>Vintage Sepia</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Live Camera Screen Right -->
+        <div class="viewport-container">
+            <div class="camera-top-bar">
+                <select id="cameraSelect" style="width: auto;">
+                    <option>Integrated Camera (0c45:64ab)</option>
+                </select>
+                <div>
+                    <button class="btn" id="mirrorBtn">⧉ Mirror</button>
+                    <button class="btn" id="fullScreenBtn">⛶ Full</button>
+                </div>
+            </div>
+
+            <div class="viewfinder">
+                <video id="webcamVideo" autoplay playsinline muted></video>
+                <div id="watermarkOverlay" class="watermark-overlay">
+                    WATERMARK ACTIVE
+                </div>
+            </div>
+
+            <button class="btn-capture" id="takePhotoBtn">📸 TAKE PHOTO</button>
+        </div>
+    </div>
+
+    <!-- Modal Enter Pass -->
+    <div class="modal-backdrop" id="passModal">
+        <div class="modal">
+            <h2>🔑 Enter License Passcode</h2>
+            <div class="form-group">
+                <label>Masukkan Kode Lisensi Anda:</label>
+                <input type="text" id="passCodeInput" placeholder="PASS24-XXXX-XXXX">
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn" id="closePassModal">Batal</button>
+                <button class="btn btn-green" id="submitPassBtn">Aktivasi Pass</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026";
+
+        const licenseBadge = document.getElementById('licenseBadge');
+        const watermarkOverlay = document.getElementById('watermarkOverlay');
+        const passModal = document.getElementById('passModal');
+        const enterPassBtn = document.getElementById('enterPassBtn');
+        const closePassModal = document.getElementById('closePassModal');
+        const submitPassBtn = document.getElementById('submitPassBtn');
+        const passCodeInput = document.getElementById('passCodeInput');
+        const webcamVideo = document.getElementById('webcamVideo');
+
+        // Initial webcam startup
+        async function initWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                webcamVideo.srcObject = stream;
+            } catch (err) {
+                console.warn("Kamera tidak ditemukan / izin ditolak:", err);
+            }
+        }
+
+        // Hitung sisa durasi lisensi & perbarui UI
+        function updateLicenseStatusUI() {
+            const expiryStr = localStorage.getItem('cfg_expiry_date');
+            if (!expiryStr) {
+                setExpiredUI();
+                return;
+            }
+
+            const expiryDate = new Date(expiryStr);
+            const now = new Date();
+            const diffMs = expiryDate - now;
+
+            if (diffMs <= 0) {
+                setExpiredUI();
+            } else {
+                const hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
+                licenseBadge.className = 'status-badge active';
+                licenseBadge.textContent = `● Pass Active (${hoursLeft}h Left)`;
+                watermarkOverlay.style.display = 'none';
+            }
+        }
+
+        function setExpiredUI() {
+            licenseBadge.className = 'status-badge expired';
+            licenseBadge.textContent = '● Watermark Mode (Expired)';
+            watermarkOverlay.style.display = 'flex';
+        }
+
+        // Tambah durasi ke jam yang tersisa
+        function addPassHours(hoursToAdd) {
+            const currentExpiry = localStorage.getItem('cfg_expiry_date');
+            let baseTime = new Date();
+
+            if (currentExpiry) {
+                const existingDate = new Date(currentExpiry);
+                if (existingDate > baseTime) {
+                    baseTime = existingDate;
+                }
+            }
+
+            baseTime.setHours(baseTime.getHours() + hoursToAdd);
+            localStorage.setItem('cfg_expiry_date', baseTime.toISOString());
+            updateLicenseStatusUI();
+        }
+
+        // Verifikasi Kode dengan Pencegahan Replay Attack
+        async function verifyAndApplyPassCode(code) {
+            const cleanCode = code.trim().toUpperCase();
+            if (!cleanCode) {
+                alert("Kode lisensi tidak boleh kosong!");
+                return false;
+            }
+
+            // 1. Cek riwayat kode yang sudah terpakai
+            let usedCodes = JSON.parse(localStorage.getItem('cfg_used_passcodes') || '[]');
+            if (usedCodes.includes(cleanCode)) {
+                alert("⚠️ Pass Code ini sudah pernah digunakan sebelumnya!");
+                return false;
+            }
+
+            // Kode Khusus Developer
+            if (cleanCode === 'SUPERADMIN2026') {
+                localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
+                alert("Developer Access Activated (Akses Aktif hingga 2030)!");
+                updateLicenseStatusUI();
+                return true;
+            }
+
+            // Parse format PASS{hours}-{salt}-{checksum}
+            const match = cleanCode.match(/^PASS(\d+)-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
+            if (!match) {
+                alert("Format Pass Code tidak valid!");
+                return false;
+            }
+
+            const hours = parseInt(match[1], 10);
+            const salt = match[2];
+            const checksum = match[3];
+
+            // Hitung ulang Hash SHA-256
+            const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
+            const msgBuffer = new TextEncoder().encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
+
+            if (checksum === calculatedChecksum) {
+                // 2. Tandai kode sebagai sudah digunakan
+                usedCodes.push(cleanCode);
+                localStorage.setItem('cfg_used_passcodes', JSON.stringify(usedCodes));
+
+                addPassHours(hours);
+                alert(`🎉 Pass Code Valid! Durasi bertambah: +${hours} Jam. Watermark dinonaktifkan.`);
+                return true;
+            } else {
+                alert("Pass Code tidak sah atau salah!");
+                return false;
+            }
+        }
+
+        // Event Listeners Modal
+        enterPassBtn.addEventListener('click', () => passModal.classList.add('active'));
+        closePassModal.addEventListener('click', () => passModal.classList.remove('active'));
+
+        submitPassBtn.addEventListener('click', async () => {
+            const code = passCodeInput.value;
+            const success = await verifyAndApplyPassCode(code);
+            if (success) {
+                passCodeInput.value = '';
+                passModal.classList.remove('active');
+            }
+        });
+
+        // Deteksi Parameter URL Auto-Activation (?pass=PASS24-XXXX-XXXX)
+        window.addEventListener('DOMContentLoaded', async () => {
+            initWebcam();
+            updateLicenseStatusUI();
+            setInterval(updateLicenseStatusUI, 60000); // Perbarui status tiap menit
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('pass')) {
+                const urlPassCode = urlParams.get('pass');
+                const success = await verifyAndApplyPassCode(urlPassCode);
+                if (success) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
