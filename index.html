@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk Photobooth Pro 21.0</title>
+    <title>Kiosk Photobooth Pro 19.1</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +55,7 @@
             touch-action: manipulation;
         }
 
+        /* HEADER UI REDESIGN */
         header.app-header {
             background: #0f172a;
             border-bottom: 1px solid var(--panel-border);
@@ -65,6 +66,7 @@
             z-index: 20;
         }
 
+        /* ROW 1: BRAND & EVENT SETTING */
         .header-top {
             display: flex;
             justify-content: space-between;
@@ -119,6 +121,7 @@
         .license-badge.free { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         .license-badge.active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
 
+        /* ROW 2 & 3: GRID TOOLBAR */
         .toolbar-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -145,6 +148,7 @@
             letter-spacing: 0.05em;
         }
 
+        /* SEGMENTED CONTROL FOR MODES */
         .segmented-control {
             display: flex;
             background: #1e293b;
@@ -178,6 +182,7 @@
             box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
         }
 
+        /* ACTION BUTTON GROUPS */
         .btn-group {
             display: flex;
             gap: 6px;
@@ -208,6 +213,7 @@
         .btn-pass { background: #059669; color: #fff; }
         .btn-pass:hover { background: #047857; }
 
+        /* HARDWARE CONTROLS */
         .cam-select {
             flex: 1.5;
             background: #1e293b;
@@ -236,6 +242,7 @@
         }
         .btn-icon:hover { background: #334155; }
 
+        /* MAIN LAYOUT */
         main {
             flex: 1;
             display: grid;
@@ -284,12 +291,7 @@
             width: 100%;
         }
 
-        input[type="text"]:disabled, input[type="file"]:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #0f172a;
-        }
-
+        /* COLOR PICKER */
         .color-picker-wrapper {
             display: flex;
             align-items: center;
@@ -331,6 +333,7 @@
             background: none;
         }
 
+        /* CAMERA STAGE */
         .stage-container {
             background: #000;
             border-radius: var(--radius-lg);
@@ -383,6 +386,7 @@
             z-index: 5;
         }
 
+        /* FLASH & COUNTDOWN */
         .flash-overlay {
             position: absolute;
             inset: 0; background: #ffffff;
@@ -413,6 +417,7 @@
         .btn-capture:active { transform: scale(0.96); }
         .btn-capture:hover { background: var(--accent-hover); }
 
+        /* MODALS */
         .modal {
             position: fixed; inset: 0;
             background: rgba(4, 7, 13, 0.88);
@@ -446,6 +451,7 @@
         }
         .qr-card p { color: #0f172a; font-size: 0.7rem; font-weight: 700; }
 
+        /* RESPONSIVE TABLET & MOBILE FIXES */
         @media (max-width: 992px) {
             main { grid-template-columns: 1fr; }
             .modal-card { flex-direction: column; max-height: 95vh; }
@@ -476,9 +482,10 @@
 
     <!-- NAVBAR HEADER -->
     <header class="app-header">
+        <!-- ROW 1: BRANDING & EVENT SETTINGS -->
         <div class="header-top">
             <div class="brand-title">
-                📁 KIOSK PHOTOBOOTH PRO 21.0
+                📁 KIOSK PHOTOBOOTH PRO 19.1
             </div>
             <div class="top-actions">
                 <span id="queueBadge" class="license-badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); display: none;">🔄 Queue: 0</span>
@@ -487,7 +494,9 @@
             </div>
         </div>
 
+        <!-- ROW 2: GROUPED CONTROL TOOLBAR -->
         <div class="toolbar-grid">
+            <!-- 1. QUICK MODES (SEGMENTED CONTROL - BOTH INITIALLY OFF) -->
             <div class="tool-card">
                 <span class="tool-label">Quick Mode Preset</span>
                 <div class="segmented-control">
@@ -496,6 +505,7 @@
                 </div>
             </div>
 
+            <!-- 2. MONETIZATION & PASS CODE -->
             <div class="tool-card">
                 <span class="tool-label">License & Pass Code</span>
                 <div class="btn-group">
@@ -504,6 +514,7 @@
                 </div>
             </div>
 
+            <!-- 3. HARDWARE & DISPLAY -->
             <div class="tool-card">
                 <span class="tool-label">Camera & Screen</span>
                 <div class="btn-group">
@@ -517,6 +528,7 @@
 
     <!-- MAIN INTERFACE -->
     <main>
+        <!-- SIDEBAR CONTROLS -->
         <aside class="sidebar">
             <div class="setting-card">
                 <label>Print Size (Standard DNP Printer)</label>
@@ -579,6 +591,7 @@
             </div>
         </aside>
 
+        <!-- CAMERA DISPLAY STAGE -->
         <section class="stage-container">
             <div class="flash-overlay" id="flashElem"></div>
             <div class="countdown-overlay" id="countdownElem">3</div>
@@ -825,6 +838,7 @@
             }
         }
 
+        // --- KIOSK LOCK MODE & SECURITY ---
         function initKioskLockdown() {
             document.addEventListener('contextmenu', e => e.preventDefault());
             document.addEventListener('dragstart', e => e.preventDefault());
@@ -907,59 +921,26 @@
             }
         }
 
-        async function handleUrlParameters() {
+        function handleUrlParameters() {
             const params = new URLSearchParams(window.location.search);
             const devKey = params.get('dev');
             const passKey = params.get('pass');
-            const titleParam = params.get('title');
-            const subParam = params.get('sub');
-            const lockParam = params.get('lock');
-
-            // --- FITUR EVENT LOCK PRESET ---
-            if (titleParam !== null) {
-                eventTitle.value = titleParam;
-                localStorage.setItem('pb_eventTitle', titleParam);
-            }
-            if (subParam !== null) {
-                eventSub.value = subParam;
-                localStorage.setItem('pb_eventSub', subParam);
-            }
-
-            if (lockParam === '1') {
-                eventTitle.disabled = true;
-                eventSub.disabled = true;
-                if (overlayInput) overlayInput.disabled = true;
-                localStorage.setItem('pb_isLocked', '1');
-            }
 
             if (devKey === 'superadmin2026') {
                 localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
                 alert("Superadmin Developer Mode Active until 2030!");
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (passKey) {
-                await verifyAndApplyPassCode(passKey);
+                verifyAndApplyPassCode(passKey);
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             updateLicenseStatusUI();
         }
 
-        // --- SAFE PASSCODE VERIFICATION WITH DUPLICATE PROTECTION ---
         async function verifyAndApplyPassCode(code) {
-            const cleanCode = code ? code.trim().toUpperCase() : '';
+            const cleanCode = code.trim().toUpperCase();
             if (!cleanCode) {
                 alert("License code cannot be empty.");
-                return false;
-            }
-
-            let usedCodes = [];
-            try {
-                usedCodes = JSON.parse(localStorage.getItem('pb_used_codes') || '[]');
-            } catch (e) {
-                usedCodes = [];
-            }
-
-            if (usedCodes.includes(cleanCode)) {
-                alert("⚠️ Pass Code ini sudah pernah digunakan sebelumnya!");
                 return false;
             }
 
@@ -972,8 +953,6 @@
 
             if (cleanCode === 'TEST30M' || cleanCode === 'TEST30MIN') {
                 addPassMinutes(30);
-                usedCodes.push(cleanCode);
-                localStorage.setItem('pb_used_codes', JSON.stringify(usedCodes));
                 alert("🎉 Passcode Rahasia Testing 30 Menit Berhasil Diaktifkan! Watermark dinonaktifkan.");
                 return true;
             }
@@ -988,27 +967,18 @@
             const salt = match[2];
             const checksum = match[3];
 
-            try {
-                const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
-                const msgBuffer = new TextEncoder().encode(input);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
+            const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
+            const msgBuffer = new TextEncoder().encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
 
-                if (checksum === calculatedChecksum) {
-                    addPassHours(hours);
-                    usedCodes.push(cleanCode);
-                    localStorage.setItem('pb_used_codes', JSON.stringify(usedCodes));
-                    
-                    alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours. Watermark disabled.`);
-                    return true;
-                } else {
-                    alert("Invalid License Code.");
-                    return false;
-                }
-            } catch (err) {
-                console.error("Passcode verification error:", err);
-                alert("Passcode verification failed.");
+            if (checksum === calculatedChecksum) {
+                addPassHours(hours);
+                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours. Watermark disabled.`);
+                return true;
+            } else {
+                alert("Invalid License Code.");
                 return false;
             }
         }
@@ -1171,16 +1141,8 @@
 
         function loadSettings() {
             handleUrlParameters();
-
-            // Cek status terkunci sebelumnya
-            if (localStorage.getItem('pb_isLocked') === '1') {
-                eventTitle.disabled = true;
-                eventSub.disabled = true;
-                if (overlayInput) overlayInput.disabled = true;
-            }
-
-            if (localStorage.getItem('pb_eventTitle') !== null && !eventTitle.disabled) eventTitle.value = localStorage.getItem('pb_eventTitle');
-            if (localStorage.getItem('pb_eventSub') !== null && !eventSub.disabled) eventSub.value = localStorage.getItem('pb_eventSub');
+            if (localStorage.getItem('pb_eventTitle') !== null) eventTitle.value = localStorage.getItem('pb_eventTitle');
+            if (localStorage.getItem('pb_eventSub') !== null) eventSub.value = localStorage.getItem('pb_eventSub');
             if (localStorage.getItem('pb_dnpSize')) dnpSizeSelect.value = localStorage.getItem('pb_dnpSize');
             if (localStorage.getItem('pb_poseFormat')) poseFormat.value = localStorage.getItem('pb_poseFormat');
             if (localStorage.getItem('pb_safeMargin')) safeAreaMargin.value = localStorage.getItem('pb_safeMargin');
@@ -1261,6 +1223,7 @@
             } catch (err) { alert('Failed to detect cameras: ' + err.message); }
         }
 
+        // IMPROVED ROBUST CAMERA ACCESS FOR MOBILE (RESOLVES MODE 1 OVERCONSTRAINED ERROR)
         async function startCamera(deviceId, facingMode = null) {
             if (currentStream) {
                 currentStream.getTracks().forEach(t => t.stop());
@@ -1268,6 +1231,7 @@
             }
             webcam.srcObject = null;
 
+            // Step 1: Flexible primary constraints without rigid min/max limits
             let primaryConfig = {
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
@@ -1285,11 +1249,13 @@
             } catch (err) {
                 console.warn("Primary camera request failed, attempting fallback:", err);
                 try {
+                    // Step 2: Fallback with minimal requirement
                     let fallbackConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
                     currentStream = await navigator.mediaDevices.getUserMedia({ video: fallbackConfig });
                     webcam.srcObject = currentStream;
                 } catch (fallbackErr) {
                     try {
+                        // Step 3: Generic video fallback
                         currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
                         webcam.srcObject = currentStream;
                     } catch (finalErr) {
