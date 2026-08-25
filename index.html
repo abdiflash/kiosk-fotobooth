@@ -1212,7 +1212,7 @@
             } catch (err) { alert('Failed to detect cameras: ' + err.message); }
         }
 
-        // IMPROVED ROBUST CAMERA ACCESS FOR MOBILE (RESOLVES MODE 1 OVERCONSTRAINED ERROR)
+        // 1. KOREKSI startCamera() - PAKSA RESOLUSI TINGGI (FULL HD / 4K) DENGAN FALLBACK AMAN
         async function startCamera(deviceId, facingMode = null) {
             if (currentStream) {
                 currentStream.getTracks().forEach(t => t.stop());
@@ -1220,10 +1220,10 @@
             }
             webcam.srcObject = null;
 
-            // Step 1: Flexible primary constraints without rigid min/max limits
+            // Meminta resolusi 4K / Full HD secara ideal
             let primaryConfig = {
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
+                width: { ideal: 3840, min: 1920 },
+                height: { ideal: 2160, min: 1080 }
             };
 
             if (facingMode) {
@@ -1236,16 +1236,21 @@
                 currentStream = await navigator.mediaDevices.getUserMedia({ video: primaryConfig });
                 webcam.srcObject = currentStream;
             } catch (err) {
-                console.warn("Primary camera request failed, attempting fallback:", err);
+                console.warn("High-res camera request failed, attempting standard Full HD fallback:", err);
                 try {
-                    // Step 2: Fallback with minimal requirement
-                    let fallbackConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
+                    let fallbackConfig = {
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    };
+                    if (facingMode) fallbackConfig.facingMode = facingMode;
+                    else if (deviceId) fallbackConfig.deviceId = deviceId;
+
                     currentStream = await navigator.mediaDevices.getUserMedia({ video: fallbackConfig });
                     webcam.srcObject = currentStream;
                 } catch (fallbackErr) {
                     try {
-                        // Step 3: Generic video fallback
-                        currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        let minimalConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
+                        currentStream = await navigator.mediaDevices.getUserMedia({ video: minimalConfig });
                         webcam.srcObject = currentStream;
                     } catch (finalErr) {
                         console.error("Camera access failed completely:", finalErr);
@@ -1445,6 +1450,7 @@
             ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
+        // 2. KOREKSI generateOnlineQRCode() - TAMPIL INSTAN (0 DETIK) & UPLOAD HIGH-RES DI BACKGROUND
         async function generateOnlineQRCode() {
             const rawDriveLink = localStorage.getItem('cfg_drive_link') || "";
             const activeFolderId = extractFolderId(rawDriveLink);
@@ -1456,52 +1462,55 @@
                 return;
             }
 
-            qrcodeContainer.innerHTML = '<span style="color:#64748b; font-size:11px;">Compressing Photo...</span>';
-            qrStatus.textContent = "PROCESSING PHOTO...";
+            // A. TAMPILKAN QR CODE LANGSUNG SEKETIKA (0 DETIK) KE FOLDER DRIVE
+            const folderUrl = `https://drive.google.com/drive/folders/${activeFolderId}`;
+            qrcodeContainer.innerHTML = '';
+            new QRCode(qrcodeContainer, { 
+                text: folderUrl, 
+                width: 120, 
+                height: 120, 
+                correctLevel: QRCode.CorrectLevel.L 
+            });
+            qrStatus.textContent = "SCAN UNTUK AKSES DRIVE";
 
-            const webCanvas = document.createElement('canvas');
-            const targetW = 450; 
-            const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
-            webCanvas.width = targetW; 
-            webCanvas.height = targetH;
-            
-            const webCtx = webCanvas.getContext('2d');
-            webCtx.imageSmoothingEnabled = true;
-            webCtx.imageSmoothingQuality = 'medium';
-            webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
-            
-            const base64Image = webCanvas.toDataURL('image/jpeg', 0.4);
+            // B. PROSES KOMPRESI & UPLOAD FOTO HIGH-RES DI BACKGROUND (TIDAK MEMBLOKIR QR)
+            setTimeout(async () => {
+                const webCanvas = document.createElement('canvas');
+                const targetW = 1600; // Lebar High-Resolution 1600px
+                const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
+                webCanvas.width = targetW; 
+                webCanvas.height = targetH;
+                
+                const webCtx = webCanvas.getContext('2d');
+                webCtx.imageSmoothingEnabled = true;
+                webCtx.imageSmoothingQuality = 'high';
+                webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
+                
+                // Kompresi JPEG 85% untuk kualitas tajam namun ringan di upload
+                const base64Image = webCanvas.toDataURL('image/jpeg', 0.85);
 
-            if (!navigator.onLine) {
-                await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
-                qrcodeContainer.innerHTML = '<span style="color:#f59e0b; font-size:11px;">📦 Saved Offline (Wi-Fi Off)</span>';
-                qrStatus.textContent = "OFFLINE QUEUE ACTIVE";
-                return;
-            }
+                if (!navigator.onLine) {
+                    await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
+                    qrStatus.textContent = "📦 TERSIMPAN OFFLINE";
+                    return;
+                }
 
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    qrcodeContainer.innerHTML = '';
-                    new QRCode(qrcodeContainer, { 
-                        text: data.url, 
-                        width: 120, 
-                        height: 120, 
-                        correctLevel: QRCode.CorrectLevel.L 
+                try {
+                    const res = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName })
                     });
-                    qrStatus.textContent = "SCAN TO ACCESS PHOTOS";
-                } else throw new Error(data.message);
-            } catch (err) {
-                console.warn("Upload failed, saving to IndexedDB queue:", err);
-                await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
-                qrcodeContainer.innerHTML = '<span style="color:#f59e0b; font-size:10px;">📦 Saved to Offline Queue</span>';
-                qrStatus.textContent = "WILL SYNC WHEN ONLINE";
-            }
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        qrStatus.textContent = "✅ FOTO TERKIRIM KE DRIVE";
+                    } else throw new Error(data.message);
+                } catch (err) {
+                    console.warn("Upload background error, saved to queue:", err);
+                    await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
+                    qrStatus.textContent = "📦 TERSIMPAN DI QUEUE";
+                }
+            }, 100);
         }
 
         if (printBtn) {
