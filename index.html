@@ -703,6 +703,7 @@
         const DB_VERSION = 1;
         const STORE_NAME = 'uploadQueue';
         let db = null;
+        let dbPromise = null;
 
         const dnpDimensions = {
             '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
@@ -725,7 +726,8 @@
 
         // --- INDEXEDDB OFFLINE QUEUE SYSTEM ---
         function initDB() {
-            return new Promise((resolve, reject) => {
+            if (dbPromise) return dbPromise;
+            dbPromise = new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
                 request.onupgradeneeded = (e) => {
                     const dbInstance = e.target.result;
@@ -739,8 +741,12 @@
                     updateQueueBadge();
                     processOfflineQueue();
                 };
-                request.onerror = (e) => reject(e.target.error);
+                request.onerror = (e) => {
+                    dbPromise = null;
+                    reject(e.target.error);
+                };
             });
+            return dbPromise;
         }
 
         async function addToQueue(data) {
@@ -804,6 +810,8 @@
                             const data = await res.json();
                             if (data.status === 'success') {
                                 await removeFromQueue(item.id);
+                            } else {
+                                break;
                             }
                         } catch (err) {
                             console.warn("Queue upload paused:", err);
@@ -847,13 +855,6 @@
                 if (e.touches.length > 1) e.preventDefault();
             }, { passive: false });
 
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', e => {
-                const now = Date.now();
-                if (now - lastTouchEnd <= 300) e.preventDefault();
-                lastTouchEnd = now;
-            }, false);
-
             document.addEventListener('keydown', e => {
                 if (
                     e.key === 'F12' ||
@@ -875,7 +876,9 @@
         function isPassActive() {
             const expiryStr = localStorage.getItem('cfg_expiry_date');
             if (!expiryStr) return false;
-            return new Date().getTime() < new Date(expiryStr).getTime();
+            const expTime = new Date(expiryStr).getTime();
+            if (isNaN(expTime)) return false;
+            return new Date().getTime() < expTime;
         }
 
         function updateLicenseStatusUI() {
@@ -910,7 +913,7 @@
             const expiryStr = localStorage.getItem('cfg_expiry_date');
             const now = Date.now();
 
-            if (expiryStr && new Date(expiryStr).getTime() > now) {
+            if (expiryStr && !isNaN(new Date(expiryStr).getTime()) && new Date(expiryStr).getTime() > now) {
                 const dateObj = new Date(expiryStr);
                 const formattedDate = dateObj.toLocaleString('en-US', {
                     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -992,7 +995,7 @@
 
         function addPassMinutes(minsToAdd) {
             const expiryStr = localStorage.getItem('cfg_expiry_date');
-            const currentExpiry = expiryStr ? new Date(expiryStr).getTime() : 0;
+            const currentExpiry = (expiryStr && !isNaN(new Date(expiryStr).getTime())) ? new Date(expiryStr).getTime() : 0;
             const now = Date.now();
 
             const baseTime = (currentExpiry > now) ? currentExpiry : now;
@@ -1027,9 +1030,9 @@
             alert(`🎉 Pembayaran Berhasil! Durasi lisensi aktif ditambahkan: +${labelText}.`);
         }
 
-        async function triggerMidtransPayment(planAmount = 10000) {
-            const activeBtn = midtransPayBtn;
-            const originalText = activeBtn ? activeBtn.innerText : '';
+        async function triggerMidtransPayment(planAmount = 10000, targetBtn = null) {
+            const activeBtn = targetBtn || midtransPayBtn;
+            const originalText = activeBtn ? activeBtn.innerHTML : '';
 
             try {
                 if (activeBtn) {
@@ -1069,7 +1072,7 @@
                 alert("Failed to connect to payment server.");
             } finally {
                 if (activeBtn) {
-                    activeBtn.innerText = originalText;
+                    activeBtn.innerHTML = originalText;
                     activeBtn.disabled = false;
                 }
             }
@@ -1081,14 +1084,14 @@
         if (pay10kBtn) {
             pay10kBtn.addEventListener('click', () => {
                 paymentModal.classList.remove('active');
-                triggerMidtransPayment(10000);
+                triggerMidtransPayment(10000, pay10kBtn);
             });
         }
 
         if (pay50kBtn) {
             pay50kBtn.addEventListener('click', () => {
                 paymentModal.classList.remove('active');
-                triggerMidtransPayment(50000);
+                triggerMidtransPayment(50000, pay50kBtn);
             });
         }
 
@@ -1242,6 +1245,24 @@
             });
         }
 
+        async function refreshCameraLabels() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                if (videoDevices.length > 0) {
+                    const currentVal = cameraSelect.value;
+                    cameraSelect.innerHTML = '';
+                    videoDevices.forEach((device, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = device.deviceId;
+                        opt.text = device.label || `Camera ${idx + 1}`;
+                        if (device.deviceId === currentVal) opt.selected = true;
+                        cameraSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {}
+        }
+
         async function initCameras() {
             loadSettings();
             try {
@@ -1266,8 +1287,8 @@
             webcam.srcObject = null;
 
             let primaryConfig = {
-                width: { ideal: 3840, min: 1920 },
-                height: { ideal: 2160, min: 1080 }
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
             };
 
             if (facingMode) {
@@ -1279,27 +1300,16 @@
             try {
                 currentStream = await navigator.mediaDevices.getUserMedia({ video: primaryConfig });
                 webcam.srcObject = currentStream;
+                await refreshCameraLabels();
             } catch (err) {
-                console.warn("High-res camera request failed, attempting standard Full HD fallback:", err);
                 try {
-                    let fallbackConfig = {
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    };
-                    if (facingMode) fallbackConfig.facingMode = facingMode;
-                    else if (deviceId) fallbackConfig.deviceId = deviceId;
-
-                    currentStream = await navigator.mediaDevices.getUserMedia({ video: fallbackConfig });
+                    let minimalConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
+                    currentStream = await navigator.mediaDevices.getUserMedia({ video: minimalConfig });
                     webcam.srcObject = currentStream;
-                } catch (fallbackErr) {
-                    try {
-                        let minimalConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
-                        currentStream = await navigator.mediaDevices.getUserMedia({ video: minimalConfig });
-                        webcam.srcObject = currentStream;
-                    } catch (finalErr) {
-                        console.error("Camera access failed completely:", finalErr);
-                        alert('Failed to access camera: ' + finalErr.message);
-                    }
+                    await refreshCameraLabels();
+                } catch (finalErr) {
+                    console.error("Camera access failed completely:", finalErr);
+                    alert('Failed to access camera: ' + finalErr.message);
                 }
             }
         }
@@ -1386,12 +1396,6 @@
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
             canvas.width = config.w; canvas.height = config.h;
 
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-
-            ctx.fillStyle = selectedBgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             let loadedCount = 0; const loadedImages = [];
             capturedPhotos.forEach((src, idx) => {
                 const img = new Image();
@@ -1408,6 +1412,12 @@
             const margin = parseInt(safeAreaMargin.value) || 40;
             const hasText = eventTitle.value.trim() !== '' || eventSub.value.trim() !== '';
             const footerH = hasText ? Math.round(canvas.height * 0.10) : 0;
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            ctx.fillStyle = selectedBgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (count === 1) {
                 drawCroppedImage(ctx, images[0], margin, margin, canvas.width - (margin * 2), canvas.height - footerH - (margin * 2));
@@ -1536,20 +1546,20 @@
 
             qrStatus.textContent = "🔄 MENGUNGGAH KE DRIVE...";
 
-            try {
-                const webCanvas = document.createElement('canvas');
-                const targetW = 1600;
-                const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
-                webCanvas.width = targetW; 
-                webCanvas.height = targetH;
-                
-                const webCtx = webCanvas.getContext('2d');
-                webCtx.imageSmoothingEnabled = true;
-                webCtx.imageSmoothingQuality = 'high';
-                webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
-                
-                const base64Image = webCanvas.toDataURL('image/jpeg', 0.85);
+            const webCanvas = document.createElement('canvas');
+            const targetW = 1600;
+            const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
+            webCanvas.width = targetW; 
+            webCanvas.height = targetH;
+            
+            const webCtx = webCanvas.getContext('2d');
+            webCtx.imageSmoothingEnabled = true;
+            webCtx.imageSmoothingQuality = 'high';
+            webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
+            
+            const base64Image = webCanvas.toDataURL('image/jpeg', 0.85);
 
+            try {
                 if (!navigator.onLine) {
                     await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
                     qrStatus.textContent = "📦 OFFLINE (TERSIPAN DI QUEUE)";
@@ -1575,7 +1585,6 @@
             } catch (err) {
                 console.error("Upload Drive Error:", err);
                 try {
-                    const base64Image = outputCanvas.toDataURL('image/jpeg', 0.85);
                     await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
                     qrStatus.textContent = "📦 TERSIMPAN DI QUEUE (AKAN DIPROSES)";
                 } catch (e) {
