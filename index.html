@@ -571,6 +571,16 @@
     <!-- MAIN INTERFACE -->
     <main>
         <aside class="sidebar">
+            <!-- UPLOAD FOTO ARTATI (TEMPORER MEMORI) -->
+            <div class="setting-card">
+                <label>Upload Foto Utama (Artati - Temporer)</label>
+                <input type="file" id="uploadPhotoInput" accept="image/*" style="width: 100%;">
+                <div id="uploadPhotoBadge" style="font-size: 0.72rem; color: #10b981; display: none; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.1); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2); margin-top: 4px;">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Foto: <strong id="uploadPhotoName">-</strong></span>
+                    <button id="clearPhotoBtn" title="Hapus Foto" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size: 11px; margin-left:6px;">✕</button>
+                </div>
+            </div>
+
             <div class="setting-card">
                 <label>Print Size (Standard DNP Printer)</label>
                 <select id="dnpSizeSelect">
@@ -621,7 +631,7 @@
                     <button id="clearFrameBtn" title="Hapus Frame Aktif" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size: 11px; margin-left:6px;">✕</button>
                 </div>
                 
-                <input type="file" id="overlayInput" accept="image/png" style="margin-top: 4px;">
+                <input type="file" id="overlayInput" accept="image/png" style="margin-top: 4px;" title="Unggah Bingkai Transparan ke IndexedDB">
             </div>
 
             <div class="setting-card">
@@ -782,7 +792,7 @@
         </div>
     </div>
 
-    <!-- MODAL PANDUAN GOOGLE DRIVE (UPDATED GUIDE) -->
+    <!-- MODAL PANDUAN GOOGLE DRIVE -->
     <div class="modal" id="driveGuideModal">
         <div style="background: #111827; padding: 24px; border-radius: 16px; max-width: 680px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 85vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
@@ -863,11 +873,13 @@
             '6r_p': { w: 1800, h: 2400, isPortrait: true, printSize: '6in 8in' }
         };
 
-        let currentStream = null, isMirrored = true, capturedPhotos = [], customOverlayImage = null, selectedBgColor = '#ffffff';
+        let currentStream = null, isMirrored = true, capturedPhotos = [], uploadedPhoto = null, customOverlayImage = null, selectedBgColor = '#ffffff';
         let countdownDuration = 3;
 
         // DOM ELEMENTS
         const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), safeAreaMargin = document.getElementById('safeAreaMargin'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), passStatusText = document.getElementById('passStatusText'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus'), queueBadge = document.getElementById('queueBadge');
+
+        const uploadPhotoInput = document.getElementById('uploadPhotoInput'), uploadPhotoBadge = document.getElementById('uploadPhotoBadge'), uploadPhotoName = document.getElementById('uploadPhotoName'), clearPhotoBtn = document.getElementById('clearPhotoBtn');
 
         const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn');
         const paymentModal = document.getElementById('paymentModal'), closePaymentBtn = document.getElementById('closePaymentBtn'), pay10kBtn = document.getElementById('pay10kBtn'), pay50kBtn = document.getElementById('pay50kBtn');
@@ -877,7 +889,7 @@
         const openFrameGalleryBtn = document.getElementById('openFrameGalleryBtn'), frameGalleryModal = document.getElementById('frameGalleryModal'), closeFrameGalleryBtn = document.getElementById('closeFrameGalleryBtn'), doneFrameGalleryBtn = document.getElementById('doneFrameGalleryBtn'), modalFrameUploadInput = document.getElementById('modalFrameUploadInput'), frameGrid = document.getElementById('frameGrid'), modalRemoveFrameBtn = document.getElementById('modalRemoveFrameBtn'), activeFrameBadge = document.getElementById('activeFrameBadge'), activeFrameName = document.getElementById('activeFrameName'), clearFrameBtn = document.getElementById('clearFrameBtn');
         const openDriveGuideBtn = document.getElementById('openDriveGuideBtn'), driveGuideModal = document.getElementById('driveGuideModal'), closeDriveGuideBtn = document.getElementById('closeDriveGuideBtn'), gotItDriveGuideBtn = document.getElementById('gotItDriveGuideBtn');
 
-        // INDEXEDDB SYSTEM
+        // INDEXEDDB SYSTEM (FRAME SAJA YANG DISIMPAN DI DB)
         function initDB() {
             if (dbPromise) return dbPromise;
             dbPromise = new Promise((resolve, reject) => {
@@ -999,6 +1011,7 @@
                 liveOverlay.style.display = 'none';
                 if (activeFrameBadge) activeFrameBadge.style.display = 'none';
                 localStorage.removeItem('pb_active_frame_id');
+                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
                 return;
             }
 
@@ -1012,6 +1025,7 @@
                     if (activeFrameName) activeFrameName.textContent = frameObj.name;
                 }
                 localStorage.setItem('pb_active_frame_id', frameObj.id);
+                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
             };
             img.src = frameObj.dataUrl;
         }
@@ -1065,6 +1079,39 @@
                 console.error("Error rendering frame grid:", err);
                 frameGrid.innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal memuat frame.</span>';
             }
+        }
+
+        // HANDLER UPLOAD FOTO ARTATI (TEMPORER MEMORI)
+        if (uploadPhotoInput) {
+            uploadPhotoInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    uploadedPhoto = evt.target.result; // Hanya disimpan di variabel RAM
+                    capturedPhotos = [uploadedPhoto];
+
+                    if (uploadPhotoBadge) {
+                        uploadPhotoBadge.style.display = 'flex';
+                        if (uploadPhotoName) uploadPhotoName.textContent = file.name;
+                    }
+
+                    buildPhotostrip();
+                    resultModal.classList.add('active');
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        if (clearPhotoBtn) {
+            clearPhotoBtn.addEventListener('click', () => {
+                uploadedPhoto = null;
+                uploadPhotoInput.value = '';
+                if (uploadPhotoBadge) uploadPhotoBadge.style.display = 'none';
+                capturedPhotos = [];
+                buildPhotostrip();
+            });
         }
 
         let isProcessingQueue = false;
@@ -1148,9 +1195,8 @@
 
         function extractFolderId(input) {
             if (!input) return "";
-            const str = input.trim();
-            const match = str.match(/folders\/([a-zA-Z0-9_-]+)/);
-            return match ? match[1] : str;
+            const match = input.match(/folders\/([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : input.trim();
         }
 
         function isPassActive() {
@@ -1258,35 +1304,17 @@
             const checksum = match[3];
 
             const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
-            
-            try {
-                let calculatedChecksum = "";
-                if (window.crypto && window.crypto.subtle) {
-                    const msgBuffer = new TextEncoder().encode(input);
-                    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-                    const hashArray = Array.from(new Uint8Array(hashBuffer));
-                    calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
-                } else {
-                    // Fallback sederhana jika dijalankan di non-HTTPS/file:// lokal
-                    let hash = 0;
-                    for (let i = 0; i < input.length; i++) {
-                        hash = ((hash << 5) - hash) + input.charCodeAt(i);
-                        hash |= 0;
-                    }
-                    calculatedChecksum = Math.abs(hash).toString(16).padStart(4, '0').substring(0, 4).toUpperCase();
-                }
+            const msgBuffer = new TextEncoder().encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
 
-                if (checksum === calculatedChecksum) {
-                    addPassHours(hours);
-                    alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
-                    return true;
-                } else {
-                    alert("Invalid License Code.");
-                    return false;
-                }
-            } catch (err) {
-                console.error("Verification error:", err);
-                alert("Verification process failed.");
+            if (checksum === calculatedChecksum) {
+                addPassHours(hours);
+                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
+                return true;
+            } else {
+                alert("Invalid License Code.");
                 return false;
             }
         }
@@ -1498,7 +1526,7 @@
                 cameraWrapper.style.maxWidth = '100%';
             }
 
-            const marginPx = isNaN(parseInt(safeAreaMargin.value)) ? 0 : parseInt(safeAreaMargin.value);
+            const marginPx = parseInt(safeAreaMargin.value) || 0;
             const percentX = (marginPx / config.w) * 100;
             const percentY = (marginPx / config.h) * 100;
 
@@ -1537,8 +1565,14 @@
 
         [eventTitle, eventSub, dnpSizeSelect, poseFormat, safeAreaMargin, filterSelect].forEach(elem => {
             if (elem) {
-                elem.addEventListener('input', updateLivePreviewLayout);
-                elem.addEventListener('change', updateLivePreviewLayout);
+                elem.addEventListener('input', () => {
+                    updateLivePreviewLayout();
+                    if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
+                });
+                elem.addEventListener('change', () => {
+                    updateLivePreviewLayout();
+                    if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
+                });
             }
         });
 
@@ -1548,6 +1582,7 @@
                 btn.classList.add('active');
                 selectedBgColor = btn.dataset.color;
                 saveSettings();
+                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
             });
         });
 
@@ -1556,6 +1591,7 @@
                 document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
                 selectedBgColor = e.target.value;
                 saveSettings();
+                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
             });
         }
 
@@ -1724,12 +1760,19 @@
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
             canvas.width = config.w; canvas.height = config.h;
 
+            const photosToDraw = capturedPhotos.length > 0 ? capturedPhotos : (uploadedPhoto ? [uploadedPhoto] : []);
+
+            if (photosToDraw.length === 0) {
+                drawLayout(ctx, canvas, [], config.isPortrait);
+                return;
+            }
+
             let loadedCount = 0; const loadedImages = [];
-            capturedPhotos.forEach((src, idx) => {
+            photosToDraw.forEach((src, idx) => {
                 const img = new Image();
                 img.onload = () => {
                     loadedImages[idx] = img; loadedCount++;
-                    if (loadedCount === capturedPhotos.length) drawLayout(ctx, canvas, loadedImages, config.isPortrait);
+                    if (loadedCount === photosToDraw.length) drawLayout(ctx, canvas, loadedImages, config.isPortrait);
                 };
                 img.src = src;
             });
@@ -1737,9 +1780,7 @@
 
         function drawLayout(ctx, canvas, images, isPortrait) {
             const count = images.length;
-            const marginVal = parseInt(safeAreaMargin.value);
-            const margin = isNaN(marginVal) ? 40 : marginVal;
-            
+            const margin = parseInt(safeAreaMargin.value) || 40;
             const hasText = eventTitle.value.trim() !== '' || eventSub.value.trim() !== '';
             const footerH = hasText ? Math.round(canvas.height * 0.10) : 0;
 
@@ -1865,7 +1906,6 @@
             }
 
             if (!qrRendered) {
-                qrcodeContainer.innerHTML = '';
                 const qrImg = document.createElement('img');
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(folderUrl)}`;
                 qrImg.style.width = '120px';
