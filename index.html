@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk Photobooth Pro 26</title>
-    
+    <title>Kiosk Photobooth Pro 22.1</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -520,27 +519,9 @@
 
         #printArea { display: none; }
         @media print {
-            html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
-                overflow: hidden !important;
-            }
             body > *:not(#printArea) { display: none !important; }
-            #printArea { 
-                display: block !important; 
-                width: 100vw !important; 
-                height: 100vh !important; 
-                margin: 0 !important;
-                padding: 0 !important;
-                page-break-after: avoid !important;
-                page-break-inside: avoid !important;
-            }
-            #printArea img { 
-                width: 100% !important; 
-                height: 100% !important; 
-                object-fit: contain !important; 
-            }
+            #printArea { display: block !important; width: 100% !important; height: 100% !important; }
+            #printArea img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
         }
     </style>
 </head>
@@ -550,7 +531,7 @@
     <header class="app-header">
         <div class="header-top">
             <div class="brand-title">
-                📁 KIOSK PHOTOBOOTH PRO 26
+                📁 KIOSK PHOTOBOOTH PRO 22.1
             </div>
             <div class="top-actions">
                 <span id="queueBadge" class="license-badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); display: none;">🔄 Queue: 0</span>
@@ -866,8 +847,9 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1--xNcCNfK0hOzvzJQbO1LoPP4RDhJFwZRkajKLJuTC0ev8z30YQw3hyLQIg9jr0kEw/exec';
         const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026";
 
+        // BUMPED DB_VERSION TO 3 TO FORCE DB SCHEMA UPDATE FOR EXISTING USERS
         const DB_NAME = 'PhotoboothKioskDB';
-        const DB_VERSION = 2;
+        const DB_VERSION = 3;
         const STORE_NAME = 'uploadQueue';
         const FRAME_STORE_NAME = 'frames';
         let db = null;
@@ -919,6 +901,7 @@
                 };
                 request.onerror = (e) => {
                     dbPromise = null;
+                    console.error("IndexedDB initialization error:", e.target.error);
                     reject(e.target.error);
                 };
             });
@@ -926,46 +909,65 @@
         }
 
         async function addToQueue(data) {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.add({ ...data, timestamp: Date.now() });
-                req.onsuccess = () => {
-                    updateQueueBadge();
-                    resolve(req.result);
-                };
-                req.onerror = () => reject(req.error);
-            });
+            try {
+                if (!db) await initDB();
+                if (!db.objectStoreNames.contains(STORE_NAME)) return;
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.add({ ...data, timestamp: Date.now() });
+                    req.onsuccess = () => {
+                        updateQueueBadge();
+                        resolve(req.result);
+                    };
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (err) {
+                console.error("Error adding to queue:", err);
+            }
         }
 
         async function getQueue() {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
+            try {
+                if (!db) await initDB();
+                if (!db.objectStoreNames.contains(STORE_NAME)) return [];
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (err) {
+                console.error("Error fetching queue:", err);
+                return [];
+            }
         }
 
         async function removeFromQueue(id) {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.delete(id);
-                req.onsuccess = () => {
-                    updateQueueBadge();
-                    resolve();
-                };
-                req.onerror = () => reject(req.error);
-            });
+            try {
+                if (!db) await initDB();
+                if (!db.objectStoreNames.contains(STORE_NAME)) return;
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.delete(id);
+                    req.onsuccess = () => {
+                        updateQueueBadge();
+                        resolve();
+                    };
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (err) {
+                console.error("Error removing queue item:", err);
+            }
         }
 
         async function addFrameToDB(name, dataUrl) {
             if (!db) await initDB();
+            if (!db.objectStoreNames.contains(FRAME_STORE_NAME)) {
+                throw new Error("Store 'frames' belum siap pada IndexedDB.");
+            }
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(FRAME_STORE_NAME, 'readwrite');
                 const store = tx.objectStore(FRAME_STORE_NAME);
@@ -977,17 +979,21 @@
 
         async function getAllFramesFromDB() {
             if (!db) await initDB();
+            if (!db.objectStoreNames.contains(FRAME_STORE_NAME)) {
+                return [];
+            }
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(FRAME_STORE_NAME, 'readonly');
                 const store = tx.objectStore(FRAME_STORE_NAME);
                 const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
+                req.onsuccess = () => resolve(req.result || []);
                 req.onerror = () => reject(req.error);
             });
         }
 
         async function deleteFrameFromDB(id) {
             if (!db) await initDB();
+            if (!db.objectStoreNames.contains(FRAME_STORE_NAME)) return;
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(FRAME_STORE_NAME, 'readwrite');
                 const store = tx.objectStore(FRAME_STORE_NAME);
@@ -1030,7 +1036,13 @@
                     activeFrameBadge.style.display = 'flex';
                     if (activeFrameName) activeFrameName.textContent = frameObj.name;
                 }
-                localStorage.setItem('pb_active_frame_id', frameObj.id);
+                if (frameObj.id) {
+                    localStorage.setItem('pb_active_frame_id', frameObj.id);
+                }
+            };
+            img.onerror = (e) => {
+                console.error("Gagal memuat gambar frame:", e);
+                alert("Gagal memuat file gambar frame. Pastikan file berformat PNG transparan yang valid.");
             };
             img.src = frameObj.dataUrl;
         }
@@ -1082,7 +1094,7 @@
                 });
             } catch (err) {
                 console.error("Error rendering frame grid:", err);
-                frameGrid.innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal memuat frame.</span>';
+                frameGrid.innerHTML = '<span style="color:#ef4444; font-size:12px; grid-column: 1/-1; text-align:center;">Gagal memuat frame. Silakan muat ulang halaman.</span>';
             }
         }
 
@@ -1432,8 +1444,13 @@
             const reader = new FileReader();
             reader.onload = async (evt) => {
                 const dataUrl = evt.target.result;
-                const newId = await addFrameToDB(file.name, dataUrl);
-                applyFrame({ id: newId, name: file.name, dataUrl: dataUrl });
+                let newId = null;
+                try {
+                    newId = await addFrameToDB(file.name, dataUrl);
+                } catch (err) {
+                    console.warn("Gagal menyimpan ke IndexedDB, langsung menerapkan frame ke memori session:", err);
+                }
+                applyFrame({ id: newId || Date.now(), name: file.name, dataUrl: dataUrl });
                 renderFrameGrid();
             };
             reader.readAsDataURL(file);
@@ -1956,13 +1973,11 @@
 
         window.addEventListener('online', processOfflineQueue);
         setInterval(processOfflineQueue, 15000);
-        setInterval(updateLicenseStatusUI, 60000);
 
         window.addEventListener('load', () => {
             initCameras();
             initDB();
             initKioskLockdown();
-            updateLicenseStatusUI();
         });
     </script>
 </body>
