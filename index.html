@@ -571,16 +571,6 @@
     <!-- MAIN INTERFACE -->
     <main>
         <aside class="sidebar">
-            <!-- UPLOAD FOTO ARTATI (TEMPORER MEMORI) -->
-            <div class="setting-card">
-                <label>Upload Foto Utama (Artati - Temporer)</label>
-                <input type="file" id="uploadPhotoInput" accept="image/*" style="width: 100%;">
-                <div id="uploadPhotoBadge" style="font-size: 0.72rem; color: #10b981; display: none; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.1); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2); margin-top: 4px;">
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Foto: <strong id="uploadPhotoName">-</strong></span>
-                    <button id="clearPhotoBtn" title="Hapus Foto" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size: 11px; margin-left:6px;">✕</button>
-                </div>
-            </div>
-
             <div class="setting-card">
                 <label>Print Size (Standard DNP Printer)</label>
                 <select id="dnpSizeSelect">
@@ -600,6 +590,15 @@
                     <option value="3">3 Poses (Classic Strip)</option>
                     <option value="4">4 Poses (Grid 2x2)</option>
                 </select>
+            </div>
+
+            <!-- FITUR BARU: IMPOR FOTO GALERI (SINGLE / BATCH) -->
+            <div class="setting-card">
+                <label>📁 Impor Foto Galeri (Auto-Overlay)</label>
+                <button id="importBatchBtn" class="btn-icon" style="justify-content: center; background: #059669; width: 100%; font-weight: bold; height: 40px;">
+                    📂 Pilih Foto / Batch Folder
+                </button>
+                <input type="file" id="batchFileInput" accept="image/png, image/jpeg, image/webp" multiple style="display: none;">
             </div>
 
             <div class="setting-card">
@@ -631,7 +630,7 @@
                     <button id="clearFrameBtn" title="Hapus Frame Aktif" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size: 11px; margin-left:6px;">✕</button>
                 </div>
                 
-                <input type="file" id="overlayInput" accept="image/png" style="margin-top: 4px;" title="Unggah Bingkai Transparan ke IndexedDB">
+                <input type="file" id="overlayInput" accept="image/png" style="margin-top: 4px;">
             </div>
 
             <div class="setting-card">
@@ -851,6 +850,20 @@
         </div>
     </div>
 
+    <!-- FITUR BARU: MODAL PROGRESS PROSES BATCH OVERLAY -->
+    <div class="modal" id="batchProgressModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white; text-align: center;">
+            <h3 style="margin-bottom: 12px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                ⚡ Processing Batch Overlay
+            </h3>
+            <p id="batchStatusText" style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 16px;">Mempersiapkan foto...</p>
+            <div style="width: 100%; background: #0f172a; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--panel-border);">
+                <div id="batchProgressBar" style="width: 0%; height: 100%; background: #6366f1; transition: width 0.2s;"></div>
+            </div>
+            <p style="font-size: 0.72rem; color: #64748b;">Harap tunggu hingga semua foto selesai digabungkan dengan bingkai.</p>
+        </div>
+    </div>
+
     <div id="printArea"></div>
 
     <script>
@@ -873,13 +886,11 @@
             '6r_p': { w: 1800, h: 2400, isPortrait: true, printSize: '6in 8in' }
         };
 
-        let currentStream = null, isMirrored = true, capturedPhotos = [], uploadedPhoto = null, customOverlayImage = null, selectedBgColor = '#ffffff';
+        let currentStream = null, isMirrored = true, capturedPhotos = [], customOverlayImage = null, selectedBgColor = '#ffffff';
         let countdownDuration = 3;
 
         // DOM ELEMENTS
         const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), safeAreaMargin = document.getElementById('safeAreaMargin'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), passStatusText = document.getElementById('passStatusText'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus'), queueBadge = document.getElementById('queueBadge');
-
-        const uploadPhotoInput = document.getElementById('uploadPhotoInput'), uploadPhotoBadge = document.getElementById('uploadPhotoBadge'), uploadPhotoName = document.getElementById('uploadPhotoName'), clearPhotoBtn = document.getElementById('clearPhotoBtn');
 
         const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn');
         const paymentModal = document.getElementById('paymentModal'), closePaymentBtn = document.getElementById('closePaymentBtn'), pay10kBtn = document.getElementById('pay10kBtn'), pay50kBtn = document.getElementById('pay50kBtn');
@@ -889,7 +900,10 @@
         const openFrameGalleryBtn = document.getElementById('openFrameGalleryBtn'), frameGalleryModal = document.getElementById('frameGalleryModal'), closeFrameGalleryBtn = document.getElementById('closeFrameGalleryBtn'), doneFrameGalleryBtn = document.getElementById('doneFrameGalleryBtn'), modalFrameUploadInput = document.getElementById('modalFrameUploadInput'), frameGrid = document.getElementById('frameGrid'), modalRemoveFrameBtn = document.getElementById('modalRemoveFrameBtn'), activeFrameBadge = document.getElementById('activeFrameBadge'), activeFrameName = document.getElementById('activeFrameName'), clearFrameBtn = document.getElementById('clearFrameBtn');
         const openDriveGuideBtn = document.getElementById('openDriveGuideBtn'), driveGuideModal = document.getElementById('driveGuideModal'), closeDriveGuideBtn = document.getElementById('closeDriveGuideBtn'), gotItDriveGuideBtn = document.getElementById('gotItDriveGuideBtn');
 
-        // INDEXEDDB SYSTEM (FRAME SAJA YANG DISIMPAN DI DB)
+        // BATCH GALLERY IMPORT ELEMENTS
+        const importBatchBtn = document.getElementById('importBatchBtn'), batchFileInput = document.getElementById('batchFileInput'), batchProgressModal = document.getElementById('batchProgressModal'), batchStatusText = document.getElementById('batchStatusText'), batchProgressBar = document.getElementById('batchProgressBar');
+
+        // INDEXEDDB SYSTEM
         function initDB() {
             if (dbPromise) return dbPromise;
             dbPromise = new Promise((resolve, reject) => {
@@ -1011,7 +1025,6 @@
                 liveOverlay.style.display = 'none';
                 if (activeFrameBadge) activeFrameBadge.style.display = 'none';
                 localStorage.removeItem('pb_active_frame_id');
-                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
                 return;
             }
 
@@ -1025,7 +1038,6 @@
                     if (activeFrameName) activeFrameName.textContent = frameObj.name;
                 }
                 localStorage.setItem('pb_active_frame_id', frameObj.id);
-                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
             };
             img.src = frameObj.dataUrl;
         }
@@ -1079,39 +1091,6 @@
                 console.error("Error rendering frame grid:", err);
                 frameGrid.innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal memuat frame.</span>';
             }
-        }
-
-        // HANDLER UPLOAD FOTO ARTATI (TEMPORER MEMORI)
-        if (uploadPhotoInput) {
-            uploadPhotoInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    uploadedPhoto = evt.target.result; // Hanya disimpan di variabel RAM
-                    capturedPhotos = [uploadedPhoto];
-
-                    if (uploadPhotoBadge) {
-                        uploadPhotoBadge.style.display = 'flex';
-                        if (uploadPhotoName) uploadPhotoName.textContent = file.name;
-                    }
-
-                    buildPhotostrip();
-                    resultModal.classList.add('active');
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        if (clearPhotoBtn) {
-            clearPhotoBtn.addEventListener('click', () => {
-                uploadedPhoto = null;
-                uploadPhotoInput.value = '';
-                if (uploadPhotoBadge) uploadPhotoBadge.style.display = 'none';
-                capturedPhotos = [];
-                buildPhotostrip();
-            });
         }
 
         let isProcessingQueue = false;
@@ -1479,6 +1458,139 @@
         if (closeDriveGuideBtn) closeDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.remove('active'));
         if (gotItDriveGuideBtn) gotItDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.remove('active'));
 
+        // LOGIKA PEMROSESAN BATCH & AUTO-OVERLAY FOTO GALERI
+        if (importBatchBtn && batchFileInput) {
+            importBatchBtn.addEventListener('click', () => batchFileInput.click());
+            batchFileInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                if (!files || files.length === 0) return;
+
+                if (files.length === 1) {
+                    await processSingleImportedPhoto(files[0]);
+                } else {
+                    await processBatchImportedPhotos(files);
+                }
+                batchFileInput.value = '';
+            });
+        }
+
+        function loadImageFromFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function processSingleImportedPhoto(file) {
+            try {
+                const img = await loadImageFromFile(file);
+                capturedPhotos = [img.src];
+                
+                const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+                outputCanvas.width = config.w;
+                outputCanvas.height = config.h;
+                const ctx = outputCanvas.getContext('2d');
+                
+                drawLayout(ctx, outputCanvas, [img], config.isPortrait);
+                
+                resultModal.classList.add('active');
+                generateOnlineQRCode();
+            } catch (err) {
+                console.error("Single photo import error:", err);
+                alert("Gagal memproses foto yang diimpor.");
+            }
+        }
+
+        async function processBatchImportedPhotos(files) {
+            if (!batchProgressModal) return;
+            batchProgressModal.classList.add('active');
+            if (batchProgressBar) batchProgressBar.style.width = '0%';
+            if (batchStatusText) batchStatusText.textContent = `Memproses 0 dari ${files.length} foto...`;
+
+            const zip = new JSZip();
+            const folder = zip.folder("photobooth_batch_overlay");
+            const activeFolderId = extractFolderId(localStorage.getItem('cfg_drive_link') || "");
+            const activeEventName = localStorage.getItem('cfg_event_name') || eventTitle.value || "Photobooth Event";
+
+            let successCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (batchStatusText) batchStatusText.textContent = `Memproses foto ${i + 1} dari ${files.length} (${file.name})...`;
+                if (batchProgressBar) batchProgressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
+
+                try {
+                    const img = await loadImageFromFile(file);
+                    const canvas = document.createElement('canvas');
+                    const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+                    canvas.width = config.w;
+                    canvas.height = config.h;
+                    const ctx = canvas.getContext('2d');
+
+                    drawLayout(ctx, canvas, [img], config.isPortrait);
+
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const base64Data = dataUrl.split(',')[1];
+                    
+                    const cleanName = file.name.replace(/\.[^/.]+$/, "") + `_framed_${i + 1}.png`;
+                    folder.file(cleanName, base64Data, { base64: true });
+
+                    if (activeFolderId) {
+                        const webCanvas = document.createElement('canvas');
+                        const targetW = 1600;
+                        const targetH = Math.round((canvas.height / canvas.width) * targetW);
+                        webCanvas.width = targetW;
+                        webCanvas.height = targetH;
+                        const webCtx = webCanvas.getContext('2d');
+                        webCtx.imageSmoothingEnabled = true;
+                        webCtx.imageSmoothingQuality = 'high';
+                        webCtx.drawImage(canvas, 0, 0, targetW, targetH);
+                        const jpegData = webCanvas.toDataURL('image/jpeg', 0.85);
+
+                        if (navigator.onLine) {
+                            fetch(GOOGLE_SCRIPT_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({
+                                    image: jpegData,
+                                    masterFolderId: activeFolderId,
+                                    eventName: activeEventName
+                                })
+                            }).catch(err => {
+                                addToQueue({ image: jpegData, masterFolderId: activeFolderId, eventName: activeEventName });
+                            });
+                        } else {
+                            addToQueue({ image: jpegData, masterFolderId: activeFolderId, eventName: activeEventName });
+                        }
+                    }
+
+                    successCount++;
+                } catch (err) {
+                    console.error(`Gagal memproses file ${file.name}:`, err);
+                }
+
+                await new Promise(r => setTimeout(r, 40));
+            }
+
+            if (batchStatusText) batchStatusText.textContent = `Mengompres file ke ZIP...`;
+            zip.generateAsync({ type: "blob" }).then((blob) => {
+                saveAs(blob, `photobooth_batch_${Date.now()}.zip`);
+                batchProgressModal.classList.remove('active');
+                alert(`🎉 Berhasil memproses ${successCount} dari ${files.length} foto! File ZIP telah otomatis diunduh.`);
+            }).catch(err => {
+                console.error("ZIP Generation Error:", err);
+                batchProgressModal.classList.remove('active');
+                alert("Gagal mengompres hasil batch foto.");
+            });
+        }
+
         function setActiveModeBtn(selectedBtn) {
             [mode1Btn, mode2Btn].forEach(b => b.classList.remove('active'));
             if (selectedBtn) selectedBtn.classList.add('active');
@@ -1565,14 +1677,8 @@
 
         [eventTitle, eventSub, dnpSizeSelect, poseFormat, safeAreaMargin, filterSelect].forEach(elem => {
             if (elem) {
-                elem.addEventListener('input', () => {
-                    updateLivePreviewLayout();
-                    if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
-                });
-                elem.addEventListener('change', () => {
-                    updateLivePreviewLayout();
-                    if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
-                });
+                elem.addEventListener('input', updateLivePreviewLayout);
+                elem.addEventListener('change', updateLivePreviewLayout);
             }
         });
 
@@ -1582,7 +1688,6 @@
                 btn.classList.add('active');
                 selectedBgColor = btn.dataset.color;
                 saveSettings();
-                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
             });
         });
 
@@ -1591,7 +1696,6 @@
                 document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
                 selectedBgColor = e.target.value;
                 saveSettings();
-                if (capturedPhotos.length > 0 || uploadedPhoto) buildPhotostrip();
             });
         }
 
@@ -1760,19 +1864,12 @@
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
             canvas.width = config.w; canvas.height = config.h;
 
-            const photosToDraw = capturedPhotos.length > 0 ? capturedPhotos : (uploadedPhoto ? [uploadedPhoto] : []);
-
-            if (photosToDraw.length === 0) {
-                drawLayout(ctx, canvas, [], config.isPortrait);
-                return;
-            }
-
             let loadedCount = 0; const loadedImages = [];
-            photosToDraw.forEach((src, idx) => {
+            capturedPhotos.forEach((src, idx) => {
                 const img = new Image();
                 img.onload = () => {
                     loadedImages[idx] = img; loadedCount++;
-                    if (loadedCount === photosToDraw.length) drawLayout(ctx, canvas, loadedImages, config.isPortrait);
+                    if (loadedCount === capturedPhotos.length) drawLayout(ctx, canvas, loadedImages, config.isPortrait);
                 };
                 img.src = src;
             });
