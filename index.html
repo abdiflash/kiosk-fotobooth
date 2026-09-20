@@ -1148,8 +1148,9 @@
 
         function extractFolderId(input) {
             if (!input) return "";
-            const match = input.match(/folders\/([a-zA-Z0-9_-]+)/);
-            return match ? match[1] : input.trim();
+            const str = input.trim();
+            const match = str.match(/folders\/([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : str;
         }
 
         function isPassActive() {
@@ -1257,17 +1258,35 @@
             const checksum = match[3];
 
             const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
-            const msgBuffer = new TextEncoder().encode(input);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
+            
+            try {
+                let calculatedChecksum = "";
+                if (window.crypto && window.crypto.subtle) {
+                    const msgBuffer = new TextEncoder().encode(input);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
+                } else {
+                    // Fallback sederhana jika dijalankan di non-HTTPS/file:// lokal
+                    let hash = 0;
+                    for (let i = 0; i < input.length; i++) {
+                        hash = ((hash << 5) - hash) + input.charCodeAt(i);
+                        hash |= 0;
+                    }
+                    calculatedChecksum = Math.abs(hash).toString(16).padStart(4, '0').substring(0, 4).toUpperCase();
+                }
 
-            if (checksum === calculatedChecksum) {
-                addPassHours(hours);
-                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
-                return true;
-            } else {
-                alert("Invalid License Code.");
+                if (checksum === calculatedChecksum) {
+                    addPassHours(hours);
+                    alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
+                    return true;
+                } else {
+                    alert("Invalid License Code.");
+                    return false;
+                }
+            } catch (err) {
+                console.error("Verification error:", err);
+                alert("Verification process failed.");
                 return false;
             }
         }
@@ -1408,7 +1427,7 @@
             });
         }
 
-        async function handleFrameFileUpload(file, inputElem = null) {
+        async function handleFrameFileUpload(file) {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (evt) => {
@@ -1416,17 +1435,16 @@
                 const newId = await addFrameToDB(file.name, dataUrl);
                 applyFrame({ id: newId, name: file.name, dataUrl: dataUrl });
                 renderFrameGrid();
-                if (inputElem) inputElem.value = '';
             };
             reader.readAsDataURL(file);
         }
 
         if (modalFrameUploadInput) {
-            modalFrameUploadInput.addEventListener('change', (e) => handleFrameFileUpload(e.target.files[0], e.target));
+            modalFrameUploadInput.addEventListener('change', (e) => handleFrameFileUpload(e.target.files[0]));
         }
 
         if (overlayInput) {
-            overlayInput.addEventListener('change', (e) => handleFrameFileUpload(e.target.files[0], e.target));
+            overlayInput.addEventListener('change', (e) => handleFrameFileUpload(e.target.files[0]));
         }
 
         if (openDriveGuideBtn) openDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.add('active'));
@@ -1480,7 +1498,7 @@
                 cameraWrapper.style.maxWidth = '100%';
             }
 
-            const marginPx = parseInt(safeAreaMargin.value) || 0;
+            const marginPx = isNaN(parseInt(safeAreaMargin.value)) ? 0 : parseInt(safeAreaMargin.value);
             const percentX = (marginPx / config.w) * 100;
             const percentY = (marginPx / config.h) * 100;
 
@@ -1502,21 +1520,6 @@
             localStorage.setItem('pb_filter', filterSelect.value);
         }
 
-        function syncColorPickerUI(color) {
-            let matched = false;
-            document.querySelectorAll('.color-btn').forEach(btn => {
-                if (btn.dataset.color.toLowerCase() === color.toLowerCase()) {
-                    btn.classList.add('active');
-                    matched = true;
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            if (!matched && customColorPicker) {
-                customColorPicker.value = color.startsWith('#') ? color : '#ffffff';
-            }
-        }
-
         function loadSettings() {
             handleUrlParameters();
             if (localStorage.getItem('pb_eventTitle') !== null) eventTitle.value = localStorage.getItem('pb_eventTitle');
@@ -1527,7 +1530,7 @@
             if (localStorage.getItem('pb_filter')) filterSelect.value = localStorage.getItem('pb_filter');
             if (localStorage.getItem('pb_bgColor')) {
                 selectedBgColor = localStorage.getItem('pb_bgColor');
-                syncColorPickerUI(selectedBgColor);
+                customColorPicker.value = selectedBgColor.startsWith('#') ? selectedBgColor : '#ffffff';
             }
             updateLivePreviewLayout();
         }
@@ -1634,7 +1637,7 @@
             if (facingMode) {
                 primaryConfig.facingMode = { ideal: facingMode };
             } else if (deviceId) {
-                primaryConfig.deviceId = { ideal: deviceId };
+                primaryConfig.deviceId = { exact: deviceId };
             }
 
             try {
@@ -1721,8 +1724,6 @@
             const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
             canvas.width = config.w; canvas.height = config.h;
 
-            if (capturedPhotos.length === 0) return;
-
             let loadedCount = 0; const loadedImages = [];
             capturedPhotos.forEach((src, idx) => {
                 const img = new Image();
@@ -1736,7 +1737,9 @@
 
         function drawLayout(ctx, canvas, images, isPortrait) {
             const count = images.length;
-            const margin = parseInt(safeAreaMargin.value) || 40;
+            const marginVal = parseInt(safeAreaMargin.value);
+            const margin = isNaN(marginVal) ? 40 : marginVal;
+            
             const hasText = eventTitle.value.trim() !== '' || eventSub.value.trim() !== '';
             const footerH = hasText ? Math.round(canvas.height * 0.10) : 0;
 
@@ -1764,11 +1767,6 @@
                     { x: margin * 2 + photoW, y: margin * 2 + photoH }
                 ];
                 images.forEach((img, i) => drawCroppedImage(ctx, img, pos[i].x, pos[i].y, photoW, photoH));
-            } else {
-                const availH = canvas.height - footerH - (margin * (count + 1));
-                const photoH = availH / count;
-                const photoW = canvas.width - (margin * 2);
-                images.forEach((img, i) => drawCroppedImage(ctx, img, margin, margin + i * (photoH + margin), photoW, photoH));
             }
 
             if (customOverlayImage) ctx.drawImage(customOverlayImage, 0, 0, canvas.width, canvas.height);
@@ -1867,6 +1865,7 @@
             }
 
             if (!qrRendered) {
+                qrcodeContainer.innerHTML = '';
                 const qrImg = document.createElement('img');
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(folderUrl)}`;
                 qrImg.style.width = '120px';
