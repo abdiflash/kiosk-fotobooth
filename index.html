@@ -45,6 +45,11 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
+        html, body {
+            overscroll-behavior-y: none;
+            touch-action: manipulation;
+        }
+
         input, textarea {
             user-select: text !important;
             -webkit-user-select: text !important;
@@ -57,7 +62,6 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            touch-action: manipulation;
         }
 
         header.app-header {
@@ -1640,10 +1644,22 @@
 
         if (cameraSelect) cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
         if (mirrorBtn) mirrorBtn.addEventListener('click', () => { isMirrored = !isMirrored; webcam.classList.toggle('mirrored', isMirrored); });
+        
         if (fullscreenBtn) {
             fullscreenBtn.addEventListener('click', () => {
-                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-                else document.exitFullscreen();
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) {
+                        document.documentElement.webkitRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                }
             });
         }
 
