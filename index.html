@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk Photobooth Pro 22.1</title>
+    <title>Kiosk Photobooth Pro 26</title>
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -396,14 +397,7 @@
             text-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 40; display: none;
         }
 
-        .capture-bar { 
-            position: absolute; 
-            bottom: 20px; 
-            z-index: 30; 
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+        .capture-bar { position: absolute; bottom: 20px; z-index: 30; }
         .btn-capture { 
             padding: 14px 36px; 
             font-size: 1.05rem; 
@@ -520,15 +514,33 @@
             .btn-settings { padding: 6px 10px; font-size: 0.7rem; min-height: 32px; }
             .toolbar-grid { grid-template-columns: 1fr; gap: 8px; }
             .btn-action, .seg-btn, .cam-select, .btn-icon { height: 36px; min-height: 36px; font-size: 0.72rem; }
-            .btn-capture { padding: 12px 24px; font-size: 0.95rem; }
+            .btn-capture { padding: 12px 28px; font-size: 0.95rem; }
             main { padding: 10px; gap: 12px; }
         }
 
         #printArea { display: none; }
         @media print {
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                overflow: hidden !important;
+            }
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; width: 100% !important; height: 100% !important; }
-            #printArea img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+            #printArea { 
+                display: block !important; 
+                width: 100vw !important; 
+                height: 100vh !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            #printArea img { 
+                width: 100% !important; 
+                height: 100% !important; 
+                object-fit: contain !important; 
+            }
         }
     </style>
 </head>
@@ -600,13 +612,6 @@
             </div>
 
             <div class="setting-card">
-                <label>Langkah 1: Galeri Foto Subjek (IndexedDB)</label>
-                <button id="sidebarPhotoGalleryBtn" class="btn-icon" style="justify-content: center; background: #059669; width: 100%;">
-                    📷 Galeri Foto (Pilih / Upload)
-                </button>
-            </div>
-
-            <div class="setting-card">
                 <label>Margin / Safe Area (px)</label>
                 <input type="range" id="safeAreaMargin" min="0" max="150" value="40">
             </div>
@@ -625,9 +630,9 @@
             </div>
 
             <div class="setting-card">
-                <label>Langkah 2: Frame Overlay (PNG Transparan)</label>
+                <label>Frame Overlay (PNG Transparan)</label>
                 <button id="openFrameGalleryBtn" class="btn-icon" style="justify-content: center; background: #334155; width: 100%;">
-                    🖼️ Galeri Frame PNG (IndexedDB)
+                    🖼️ Galeri Frame (IndexedDB)
                 </button>
 
                 <div id="activeFrameBadge" style="font-size: 0.72rem; color: #38bdf8; display: none; align-items: center; justify-content: space-between; background: rgba(56, 189, 248, 0.1); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); margin-top: 4px;">
@@ -667,7 +672,6 @@
 
             <div class="capture-bar">
                 <button class="btn-capture" id="startBtn">📸 TAKE PHOTO</button>
-                <button id="openPhotoGalleryBtn" class="btn-icon" style="padding: 14px 20px; font-size: 0.9rem; font-weight: 800; border-radius: 100px; background: #1e293b; border: 1px solid var(--panel-border); height: auto; white-space: nowrap;">🖼️ Galeri Foto</button>
             </div>
         </section>
     </main>
@@ -773,34 +777,11 @@
         </div>
     </div>
 
-    <!-- MODAL GALERI FOTO (INDEXEDDB) -->
-    <div class="modal" id="photoGalleryModal">
-        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 650px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 85vh; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">📷 Galeri Foto Subjek (IndexedDB)</h3>
-                <button id="closePhotoGalleryBtn" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">✕</button>
-            </div>
-
-            <div style="margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; border: 1px dashed var(--panel-border);">
-                <label style="font-size: 0.75rem; font-weight: bold; color: #94a3b8; display: block; margin-bottom: 6px;">+ Unggah Foto Baru dari Galeri Perangkat:</label>
-                <input type="file" id="modalPhotoUploadInput" accept="image/*" multiple style="width: 100%; font-size: 0.8rem; background: #0f172a;">
-            </div>
-
-            <div id="photoGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; overflow-y: auto; padding-right: 4px; flex: 1; min-height: 200px;">
-                <!-- Photo cards rendered dynamically via JS -->
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px; border-top: 1px solid var(--panel-border); padding-top: 12px;">
-                <button id="donePhotoGalleryBtn" class="btn-action btn-qris" style="padding: 8px 20px; flex: initial;">Selesai</button>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL GALERI FRAME (INDEXEDDB) -->
     <div class="modal" id="frameGalleryModal">
         <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 650px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 85vh; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">🖼️ Galeri Frame PNG Transparan (IndexedDB)</h3>
+                <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">🖼️ Galeri Frame PNG (IndexedDB)</h3>
                 <button id="closeFrameGalleryBtn" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">✕</button>
             </div>
 
@@ -820,7 +801,7 @@
         </div>
     </div>
 
-    <!-- MODAL PANDUAN GOOGLE DRIVE (UPDATED GUIDE) -->
+    <!-- MODAL PANDUAN GOOGLE DRIVE -->
     <div class="modal" id="driveGuideModal">
         <div style="background: #111827; padding: 24px; border-radius: 16px; max-width: 680px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 85vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
@@ -886,10 +867,9 @@
         const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026";
 
         const DB_NAME = 'PhotoboothKioskDB';
-        const DB_VERSION = 3;
+        const DB_VERSION = 2;
         const STORE_NAME = 'uploadQueue';
         const FRAME_STORE_NAME = 'frames';
-        const PHOTO_STORE_NAME = 'photos';
         let db = null;
         let dbPromise = null;
 
@@ -912,8 +892,7 @@
         const paymentModal = document.getElementById('paymentModal'), closePaymentBtn = document.getElementById('closePaymentBtn'), pay10kBtn = document.getElementById('pay10kBtn'), pay50kBtn = document.getElementById('pay50kBtn');
         const mode1Btn = document.getElementById('mode1Btn'), mode2Btn = document.getElementById('mode2Btn');
 
-        // PHOTO GALLERY & FRAME GALLERY ELEMENTS
-        const openPhotoGalleryBtn = document.getElementById('openPhotoGalleryBtn'), sidebarPhotoGalleryBtn = document.getElementById('sidebarPhotoGalleryBtn'), photoGalleryModal = document.getElementById('photoGalleryModal'), closePhotoGalleryBtn = document.getElementById('closePhotoGalleryBtn'), donePhotoGalleryBtn = document.getElementById('donePhotoGalleryBtn'), modalPhotoUploadInput = document.getElementById('modalPhotoUploadInput'), photoGrid = document.getElementById('photoGrid');
+        // FRAME GALLERY & GUIDE MODAL ELEMENTS
         const openFrameGalleryBtn = document.getElementById('openFrameGalleryBtn'), frameGalleryModal = document.getElementById('frameGalleryModal'), closeFrameGalleryBtn = document.getElementById('closeFrameGalleryBtn'), doneFrameGalleryBtn = document.getElementById('doneFrameGalleryBtn'), modalFrameUploadInput = document.getElementById('modalFrameUploadInput'), frameGrid = document.getElementById('frameGrid'), modalRemoveFrameBtn = document.getElementById('modalRemoveFrameBtn'), activeFrameBadge = document.getElementById('activeFrameBadge'), activeFrameName = document.getElementById('activeFrameName'), clearFrameBtn = document.getElementById('clearFrameBtn');
         const openDriveGuideBtn = document.getElementById('openDriveGuideBtn'), driveGuideModal = document.getElementById('driveGuideModal'), closeDriveGuideBtn = document.getElementById('closeDriveGuideBtn'), gotItDriveGuideBtn = document.getElementById('gotItDriveGuideBtn');
 
@@ -929,9 +908,6 @@
                     }
                     if (!dbInstance.objectStoreNames.contains(FRAME_STORE_NAME)) {
                         dbInstance.createObjectStore(FRAME_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                    }
-                    if (!dbInstance.objectStoreNames.contains(PHOTO_STORE_NAME)) {
-                        dbInstance.createObjectStore(PHOTO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
                     }
                 };
                 request.onsuccess = (e) => {
@@ -988,7 +964,6 @@
             });
         }
 
-        // --- FRAME DB FUNCTIONS ---
         async function addFrameToDB(name, dataUrl) {
             if (!db) await initDB();
             return new Promise((resolve, reject) => {
@@ -1016,40 +991,6 @@
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(FRAME_STORE_NAME, 'readwrite');
                 const store = tx.objectStore(FRAME_STORE_NAME);
-                const req = store.delete(id);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        // --- PHOTO DB FUNCTIONS ---
-        async function addPhotoToDB(name, dataUrl) {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(PHOTO_STORE_NAME, 'readwrite');
-                const store = tx.objectStore(PHOTO_STORE_NAME);
-                const req = store.add({ name, dataUrl, createdAt: Date.now() });
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        async function getAllPhotosFromDB() {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
-                const store = tx.objectStore(PHOTO_STORE_NAME);
-                const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        async function deletePhotoFromDB(id) {
-            if (!db) await initDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(PHOTO_STORE_NAME, 'readwrite');
-                const store = tx.objectStore(PHOTO_STORE_NAME);
                 const req = store.delete(id);
                 req.onsuccess = () => resolve();
                 req.onerror = () => reject(req.error);
@@ -1096,7 +1037,7 @@
 
         async function renderFrameGrid() {
             if (!frameGrid) return;
-            frameGrid.innerHTML = '<span style="color:#94a3b8; font-size:12px;">Memuat galeri frame...</span>';
+            frameGrid.innerHTML = '<span style="color:#94a3b8; font-size:12px;">Memuat galeri...</span>';
             try {
                 const frames = await getAllFramesFromDB();
                 const activeId = localStorage.getItem('pb_active_frame_id');
@@ -1142,57 +1083,6 @@
             } catch (err) {
                 console.error("Error rendering frame grid:", err);
                 frameGrid.innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal memuat frame.</span>';
-            }
-        }
-
-        async function renderPhotoGrid() {
-            if (!photoGrid) return;
-            photoGrid.innerHTML = '<span style="color:#94a3b8; font-size:12px;">Memuat galeri foto...</span>';
-            try {
-                const photos = await getAllPhotosFromDB();
-                photoGrid.innerHTML = '';
-
-                if (photos.length === 0) {
-                    photoGrid.innerHTML = '<span style="color:#94a3b8; font-size:12px; grid-column: 1/-1; text-align:center; padding:20px;">Belum ada foto tersimpan. Ambil foto kamera atau unggah foto baru!</span>';
-                    return;
-                }
-
-                photos.forEach(photo => {
-                    const card = document.createElement('div');
-                    card.className = 'frame-card';
-
-                    card.innerHTML = `
-                        <img src="${photo.dataUrl}" class="frame-thumb" alt="${photo.name}">
-                        <div class="frame-title" title="${photo.name}">${photo.name}</div>
-                        <div class="frame-actions">
-                            <button class="btn-frame-act btn-frame-select">Gunakan Foto</button>
-                            <button class="btn-frame-act btn-frame-delete">Hapus</button>
-                        </div>
-                    `;
-
-                    card.querySelector('.btn-frame-select').addEventListener('click', () => {
-                        const totalPoses = parseInt(poseFormat.value);
-                        capturedPhotos = [];
-                        for (let i = 0; i < totalPoses; i++) {
-                            capturedPhotos.push(photo.dataUrl);
-                        }
-                        photoGalleryModal.classList.remove('active');
-                        buildPhotostrip();
-                    });
-
-                    card.querySelector('.btn-frame-delete').addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        if (confirm(`Hapus foto "${photo.name}"?`)) {
-                            await deletePhotoFromDB(photo.id);
-                            renderPhotoGrid();
-                        }
-                    });
-
-                    photoGrid.appendChild(card);
-                });
-            } catch (err) {
-                console.error("Error rendering photo grid:", err);
-                photoGrid.innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal memuat galeri foto.</span>';
             }
         }
 
@@ -1515,34 +1405,6 @@
             });
         }
 
-        // EVENT LISTENERS GALERI FOTO
-        const openPhotoGalleryAction = () => {
-            photoGalleryModal.classList.add('active');
-            renderPhotoGrid();
-        };
-        if (openPhotoGalleryBtn) openPhotoGalleryBtn.addEventListener('click', openPhotoGalleryAction);
-        if (sidebarPhotoGalleryBtn) sidebarPhotoGalleryBtn.addEventListener('click', openPhotoGalleryAction);
-        if (closePhotoGalleryBtn) closePhotoGalleryBtn.addEventListener('click', () => photoGalleryModal.classList.remove('active'));
-        if (donePhotoGalleryBtn) donePhotoGalleryBtn.addEventListener('click', () => photoGalleryModal.classList.remove('active'));
-
-        async function handlePhotoFileUpload(files) {
-            if (!files || files.length === 0) return;
-            for (const file of files) {
-                const reader = new FileReader();
-                reader.onload = async (evt) => {
-                    const dataUrl = evt.target.result;
-                    await addPhotoToDB(file.name, dataUrl);
-                    renderPhotoGrid();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        if (modalPhotoUploadInput) {
-            modalPhotoUploadInput.addEventListener('change', (e) => handlePhotoFileUpload(e.target.files));
-        }
-
-        // EVENT LISTENERS GALERI FRAME
         if (openFrameGalleryBtn) {
             openFrameGalleryBtn.addEventListener('click', () => {
                 frameGalleryModal.classList.add('active');
@@ -1854,13 +1716,7 @@
             if (isMirrored) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
             ctx.filter = filterSelect.value;
             ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
-            
-            const photoDataUrl = canvas.toDataURL('image/png', 1.0);
-            capturedPhotos.push(photoDataUrl);
-
-            // Simpan otomatis hasil jepretan kamera ke Galeri Foto IndexedDB
-            const photoName = `Jepretan ${new Date().toLocaleTimeString('id-ID')}`;
-            addPhotoToDB(photoName, photoDataUrl);
+            capturedPhotos.push(canvas.toDataURL('image/png', 1.0));
         }
 
         function buildPhotostrip() {
@@ -2100,11 +1956,13 @@
 
         window.addEventListener('online', processOfflineQueue);
         setInterval(processOfflineQueue, 15000);
+        setInterval(updateLicenseStatusUI, 60000);
 
         window.addEventListener('load', () => {
             initCameras();
             initDB();
             initKioskLockdown();
+            updateLicenseStatusUI();
         });
     </script>
 </body>
