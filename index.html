@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Photobooth Self-Service Kiosk</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Libraries CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-MK-5yLAVCdP0Yd_o"></script>
+
+    <style id="dynamicPrintStyle">
+        @page { size: 5in 7in; margin: 0; }
+    </style>
+
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --panel-bg: #111827;
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --success: #10b981;
+            --text-title: #ffffff;
+            --text-body: #94a3b8;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-title);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        /* HEADER & WIZARD STEPS */
+        header.kiosk-header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .brand-logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #818cf8;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wizard-steps {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-body);
+            font-size: 0.85rem;
+            font-weight: 700;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .step-item.active {
+            opacity: 1;
+            color: #ffffff;
+        }
+
+        .step-item.completed {
+            color: var(--success);
+            opacity: 0.9;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .step-item.active .step-num {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .step-item.completed .step-num {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-admin-lock {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            color: var(--text-body);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-admin-lock:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+
+        /* WIZARD CONTAINER */
+        main.wizard-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .wizard-step-view {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .wizard-step-view.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .step-subtitle {
+            color: var(--text-body);
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        /* STEP 1: FRAME GALLERY SELECTION */
+        .frame-grid-customer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 32px;
+        }
+
+        .customer-frame-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .customer-frame-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+
+        .customer-frame-card.selected {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .customer-frame-thumb {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            background: #000;
+        }
+
+        .customer-frame-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        /* STEP 2: CAMERA STAGE */
+        .stage-container {
+            background: #000;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--panel-border);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            min-height: 440px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        video.mirrored { transform: scaleX(-1); }
+
+        .live-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: fill;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        .flash-overlay {
+            position: absolute;
+            inset: 0; background: #ffffff;
+            opacity: 0; pointer-events: none; z-index: 50;
+        }
+        .flash-overlay.active { animation: flashAnimation 0.35s ease-out; }
+        @keyframes flashAnimation { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        .countdown-overlay {
+            position: absolute;
+            font-size: 8rem; font-weight: 800; color: #ffffff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 40; display: none;
+        }
+
+        /* STEP 3: RESULT & PRINTS */
+        .result-container {
+            display: flex;
+            gap: 32px;
+            width: 100%;
+            max-width: 900px;
+            align-items: center;
+        }
+
+        .preview-box {
+            flex: 1.2;
+            background: #000;
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--panel-border);
+        }
+
+        canvas {
+            max-height: 60vh;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .result-actions-card {
+            flex: 1;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .qr-box {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+        }
+
+        .qr-box p { font-size: 0.75rem; font-weight: 800; color: #0f172a; }
+
+        /* BUTTONS */
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 16px 36px;
+            border-radius: 100px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 54px;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1px solid var(--panel-border);
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+
+        /* MODALS */
+        .modal {
+            position: fixed; inset: 0;
+            background: rgba(4, 7, 13, 0.9);
+            backdrop-filter: blur(16px);
+            z-index: 100; display: none;
+            justify-content: center; align-items: center;
+            padding: 16px;
+        }
+        .modal.active { display: flex; }
+
+        .modal-card {
+            background: #111827;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            max-width: 500px; width: 100%;
+            display: flex; flex-direction: column; gap: 16px;
+            color: white;
+        }
+
+        select, input[type="text"], input[type="password"] {
+            background: #1e293b;
+            color: var(--text-title);
+            border: 1px solid var(--panel-border);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            outline: none;
+            width: 100%;
+        }
+
+        @media (max-width: 850px) {
+            .wizard-steps span { display: none; }
+            .result-container { flex-direction: column; }
+            .stage-container { min-height: 320px; }
+            .step-title { font-size: 1.4rem; }
+        }
+
+        #printArea { display: none; }
+        @media print {
+            body > *:not(#printArea) { display: none !important; }
+            #printArea { display: block !important; width: 100% !important; height: 100% !important; }
+            #printArea img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- KIOSK HEADER -->
+    <header class="kiosk-header">
+        <div class="brand-logo">
+            📸 PHOTOBOOTH KIOSK
+        </div>
+
+        <div class="wizard-steps">
+            <div class="step-item active" id="stepIndicator1">
+                <div class="step-num">1</div>
+                <span>Pilih Frame</span>
+            </div>
+            <div style="width: 20px; height: 2px; background: rgba(255,255,255,0.1);"></div>
+            <div class="step-item" id="stepIndicator2">
+                <div class="step-num">2</div>
+                <span>Foto Studio</span>
+            </div>
+            <div style="width: 20px; height: 2px; background: rgba(255,255,255,0.1);"></div>
+            <div class="step-item" id="stepIndicator3">
+                <div class="step-num">3</div>
+                <span>Cetak & QR</span>
+            </div>
+        </div>
+
+        <button class="btn-admin-lock" id="openAdminBtn" title="Pengaturan Admin">🔒 Admin</button>
+    </header>
+
+    <!-- MAIN SELF-SERVICE WIZARD -->
+    <main class="wizard-container">
+
+        <!-- LANGKAH 1: PILIH FRAME -->
+        <section class="wizard-step-view active" id="stepView1">
+            <h1 class="step-title">Pilih Frame Foto Kamu</h1>
+            <p class="step-subtitle">Pilih desain frame favorit sebelum memulai sesi foto</p>
+
+            <div class="frame-grid-customer" id="customerFrameGrid">
+                <!-- Frame cards loaded via JS -->
+            </div>
+
+            <button class="btn-primary" id="btnGoToStep2" disabled>Lanjut ke Foto Studio ➔</button>
+        </section>
+
+        <!-- LANGKAH 2: FOTO STUDIO -->
+        <section class="wizard-step-view" id="stepView2">
+            <h1 class="step-title">Siap untuk Berpose?</h1>
+            <p class="step-subtitle" id="poseCountText">Tekan tombol di bawah jika sudah siap</p>
+
+            <div class="stage-container">
+                <div class="flash-overlay" id="flashElem"></div>
+                <div class="countdown-overlay" id="countdownElem">3</div>
+
+                <div class="camera-wrapper" id="cameraWrapper">
+                    <video id="webcam" autoplay playsinline class="mirrored"></video>
+                    <img id="liveOverlay" class="live-overlay" alt="Frame Overlay">
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <button class="btn-secondary" id="btnBackToStep1">⬅ Kembali</button>
+                <button class="btn-primary" id="startCaptureBtn">📸 AMBIL FOTO</button>
+            </div>
+        </section>
+
+        <!-- LANGKAH 3: HASIL, CETAK & QR CODE -->
+        <section class="wizard-step-view" id="stepView3">
+            <h1 class="step-title">Foto Kamu Sudah Jadi! 🎉</h1>
+            <p class="step-subtitle">Cetak foto fisik atau pindai QR Code untuk mengunduh versi digital</p>
+
+            <div class="result-container">
+                <div class="preview-box">
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+
+                <div class="result-actions-card">
+                    <button class="btn-primary" id="printBtn">🖨️ Cetak Foto Sekarang</button>
+                    <button class="btn-secondary" id="downloadPngBtn">💾 Unduh Gambar (PNG)</button>
+                    
+                    <div class="qr-box">
+                        <p id="qrStatus">MENGAMBIL KODE QR DIGITAL...</p>
+                        <div id="qrcode" style="margin-top: 4px;"></div>
+                    </div>
+
+                    <button class="btn-secondary" id="btnResetWizard" style="background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.3);">
+                        🔄 Selesai / Foto Baru
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ADMIN PIN MODAL -->
+    <div class="modal" id="adminPinModal">
+        <div class="modal-card">
+            <h3>🔒 Masukkan PIN Admin</h3>
+            <p style="color: var(--text-body); font-size: 0.85rem;">Gunakan PIN untuk membuka Pengaturan Kiosk (Default: 1234)</p>
+            <input type="password" id="adminPinInput" placeholder="Masukkan PIN Admin">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" id="closePinBtn" style="flex: 1;">Batal</button>
+                <button class="btn-primary" id="submitPinBtn" style="flex: 1; padding: 12px; font-size: 0.9rem;">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD PANEL MODAL -->
+    <div class="modal" id="adminPanelModal">
+        <div class="modal-card" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
+                <h3>⚙️ Pengaturan Kiosk (Admin)</h3>
+                <button id="closeAdminPanelBtn" style="background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">✕</button>
+            </div>
+
+            <!-- Kamera & Mode -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-weight: bold; font-size: 0.8rem; color: #818cf8;">1. PILIH KAMERA</label>
+                <select id="cameraSelect"></select>
+            </div>
+
+            <!-- Format Foto & Ukuran -->
+            <div style="display: flex; gap: 12px;">
+                <div style="flex: 1;">
+                    <label style="font-weight: bold; font-size: 0.8rem; color: #818cf8;">2. FORMAT UKURAN</label>
+                    <select id="dnpSizeSelect">
+                        <option value="5r_p" selected>5R Portrait (5x7")</option>
+                        <option value="5r_l">5R Landscape (7x5")</option>
+                        <option value="4r_p">4R Portrait (4x6")</option>
+                        <option value="strip_2x6">2x6 Strip</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-weight: bold; font-size: 0.8rem; color: #818cf8;">3. JUMLAH POSE</label>
+                    <select id="poseFormat">
+                        <option value="1">1 Pose Single</option>
+                        <option value="3" selected>3 Poses Strip</option>
+                        <option value="4">4 Poses Grid</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Google Drive Folder ID -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-weight: bold; font-size: 0.8rem; color: #818cf8;">4. GOOGLE DRIVE FOLDER ID</label>
+                <input type="text" id="inputDriveLink" placeholder="Folder ID Google Drive (Master)">
+            </div>
+
+            <!-- Manajemen Unggah Frame PNG -->
+            <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--panel-border); padding-top: 12px;">
+                <label style="font-weight: bold; font-size: 0.8rem; color: #818cf8;">5. UNGGAH BINGKAI / FRAME PNG BARU</label>
+                <input type="file" id="uploadFrameInput" accept="image/png">
+            </div>
+
+            <!-- Lisensi Pass Code -->
+            <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--panel-border); padding-top: 12px;">
+                <label style="font-weight: bold; font-size: 0.8rem; color: #10b981;">6. KODE PASS LISENSI</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="inputPassCode" placeholder="KODE PASS SECRET">
+                    <button class="btn-primary" id="btnActivatePass" style="padding: 8px 16px; font-size: 0.85rem;">Aktivasi</button>
+                </div>
+                <div id="passStatusText" style="font-size: 0.8rem; color: #94a3b8;">Status: Checking...</div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+                <button class="btn-primary" id="saveAdminSettingsBtn" style="padding: 10px 20px; font-size: 0.9rem;">Simpan Pengaturan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printArea"></div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1--xNcCNfK0hOzvzJQbO1LoPP4RDhJFwZRkajKLJuTC0ev8z30YQw3hyLQIg9jr0kEw/exec';
+        const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026";
+        const DEFAULT_ADMIN_PIN = "1234";
+
+        const DB_NAME = 'PhotoboothKioskDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'uploadQueue';
+        const FRAME_STORE_NAME = 'frames';
+        let db = null;
+        let dbPromise = null;
+
+        const dnpDimensions = {
+            '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
+            '5r_l': { w: 2100, h: 1500, isPortrait: false, printSize: '7in 5in' },
+            '4r_p': { w: 1200, h: 1800, isPortrait: true, printSize: '4in 6in' },
+            'strip_2x6': { w: 600, h: 1800, isPortrait: true, printSize: '2in 6in' }
+        };
+
+        let currentStream = null, isMirrored = true, capturedPhotos = [], customOverlayImage = null;
+        let countdownDuration = 3, currentSelectedFrame = null;
+
+        // DOM WIZARD ELEMENTS
+        const stepView1 = document.getElementById('stepView1');
+        const stepView2 = document.getElementById('stepView2');
+        const stepView3 = document.getElementById('stepView3');
+        const stepIndicator1 = document.getElementById('stepIndicator1');
+        const stepIndicator2 = document.getElementById('stepIndicator2');
+        const stepIndicator3 = document.getElementById('stepIndicator3');
+        
+        const customerFrameGrid = document.getElementById('customerFrameGrid');
+        const btnGoToStep2 = document.getElementById('btnGoToStep2');
+        const btnBackToStep1 = document.getElementById('btnBackToStep1');
+        const startCaptureBtn = document.getElementById('startCaptureBtn');
+        const btnResetWizard = document.getElementById('btnResetWizard');
+
+        // DOM CAMERA & CANVAS ELEMENTS
+        const webcam = document.getElementById('webcam');
+        const cameraWrapper = document.getElementById('cameraWrapper');
+        const liveOverlay = document.getElementById('liveOverlay');
+        const flashElem = document.getElementById('flashElem');
+        const countdownElem = document.getElementById('countdownElem');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const qrcodeContainer = document.getElementById('qrcode');
+        const qrStatus = document.getElementById('qrStatus');
+
+        // DOM ADMIN ELEMENTS
+        const openAdminBtn = document.getElementById('openAdminBtn');
+        const adminPinModal = document.getElementById('adminPinModal');
+        const adminPinInput = document.getElementById('adminPinInput');
+        const submitPinBtn = document.getElementById('submitPinBtn');
+        const closePinBtn = document.getElementById('closePinBtn');
+
+        const adminPanelModal = document.getElementById('adminPanelModal');
+        const closeAdminPanelBtn = document.getElementById('closeAdminPanelBtn');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const dnpSizeSelect = document.getElementById('dnpSizeSelect');
+        const poseFormat = document.getElementById('poseFormat');
+        const inputDriveLink = document.getElementById('inputDriveLink');
+        const uploadFrameInput = document.getElementById('uploadFrameInput');
+        const saveAdminSettingsBtn = document.getElementById('saveAdminSettingsBtn');
+        const inputPassCode = document.getElementById('inputPassCode');
+        const btnActivatePass = document.getElementById('btnActivatePass');
+        const passStatusText = document.getElementById('passStatusText');
+        const printBtn = document.getElementById('printBtn');
+        const downloadPngBtn = document.getElementById('downloadPngBtn');
+
+        // INDEXEDDB INIT
+        function initDB() {
+            if (dbPromise) return dbPromise;
+            dbPromise = new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const dbInstance = e.target.result;
+                    if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+                        dbInstance.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!dbInstance.objectStoreNames.contains(FRAME_STORE_NAME)) {
+                        dbInstance.createObjectStore(FRAME_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                    loadCustomerFrames();
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+            return dbPromise;
+        }
+
+        async function getAllFramesFromDB() {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(FRAME_STORE_NAME, 'readonly');
+                const store = tx.objectStore(FRAME_STORE_NAME);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function addFrameToDB(name, dataUrl) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(FRAME_STORE_NAME, 'readwrite');
+                const store = tx.objectStore(FRAME_STORE_NAME);
+                const req = store.add({ name, dataUrl, createdAt: Date.now() });
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        // LOAD FRAMES FOR CUSTOMER STEP 1
+        async function loadCustomerFrames() {
+            try {
+                const frames = await getAllFramesFromDB();
+                customerFrameGrid.innerHTML = '';
+
+                if (frames.length === 0) {
+                    customerFrameGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color: var(--text-body);">Belum ada bingkai frame yang tersedia. Silakan hubungi admin.</p>';
+                    return;
+                }
+
+                frames.forEach((frame, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'customer-frame-card';
+                    card.innerHTML = `
+                        <img src="${frame.dataUrl}" class="customer-frame-thumb" alt="${frame.name}">
+                        <div class="customer-frame-name">${frame.name}</div>
+                    `;
+
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.customer-frame-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+                        currentSelectedFrame = frame;
+                        btnGoToStep2.disabled = false;
+                        applySelectedFrame(frame);
+                    });
+
+                    customerFrameGrid.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Gagal memuat frame:", err);
+            }
+        }
+
+        function applySelectedFrame(frameObj) {
+            if (!frameObj) {
+                customOverlayImage = null;
+                liveOverlay.src = '';
+                liveOverlay.style.display = 'none';
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => {
+                customOverlayImage = img;
+                liveOverlay.src = frameObj.dataUrl;
+                liveOverlay.style.display = 'block';
+            };
+            img.src = frameObj.dataUrl;
+        }
+
+        // WIZARD NAVIGATION
+        function goToStep(step) {
+            [stepView1, stepView2, stepView3].forEach(v => v.classList.remove('active'));
+            [stepIndicator1, stepIndicator2, stepIndicator3].forEach(i => {
+                i.classList.remove('active');
+                i.classList.remove('completed');
+            });
+
+            if (step === 1) {
+                stepView1.classList.add('active');
+                stepIndicator1.classList.add('active');
+            } else if (step === 2) {
+                stepView2.classList.add('active');
+                stepIndicator1.classList.add('completed');
+                stepIndicator2.classList.add('active');
+                startCamera();
+            } else if (step === 3) {
+                stepView3.classList.add('active');
+                stepIndicator1.classList.add('completed');
+                stepIndicator2.classList.add('completed');
+                stepIndicator3.classList.add('active');
+            }
+        }
+
+        btnGoToStep2.addEventListener('click', () => goToStep(2));
+        btnBackToStep1.addEventListener('click', () => goToStep(1));
+        btnResetWizard.addEventListener('click', () => {
+            capturedPhotos = [];
+            goToStep(1);
+        });
+
+        // CAMERA HANDLING
+        async function startCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+            }
+
+            const selectedCamId = cameraSelect.value;
+            const constraints = {
+                video: selectedCamId ? { deviceId: { exact: selectedCamId } } : { facingMode: 'user' }
+            };
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                webcam.srcObject = currentStream;
+            } catch (err) {
+                alert("Gagal mengakses kamera: " + err.message);
+            }
+        }
+
+        async function populateCameraList() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                cameraSelect.innerHTML = '';
+                videoDevices.forEach((device, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = device.deviceId;
+                    opt.text = device.label || `Kamera ${idx + 1}`;
+                    cameraSelect.appendChild(opt);
+                });
+            } catch (e) {}
+        }
+
+        // CAPTURE PROCESS
+        startCaptureBtn.addEventListener('click', async () => {
+            capturedPhotos = [];
+            startCaptureBtn.style.display = 'none';
+            btnBackToStep1.style.display = 'none';
+            const totalPoses = parseInt(poseFormat.value);
+
+            for (let i = 0; i < totalPoses; i++) {
+                await runCountdown(countdownDuration);
+                triggerFlash();
+                captureFrame();
+                if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1200));
+            }
+
+            startCaptureBtn.style.display = 'inline-flex';
+            btnBackToStep1.style.display = 'inline-flex';
+            buildPhotostrip();
+            goToStep(3);
+        });
+
+        function runCountdown(sec) {
+            return new Promise((resolve) => {
+                countdownElem.style.display = 'block';
+                let c = sec; countdownElem.textContent = c;
+                const t = setInterval(() => {
+                    c--;
+                    if (c > 0) countdownElem.textContent = c;
+                    else { clearInterval(t); countdownElem.style.display = 'none'; resolve(); }
+                }, 1000);
+            });
+        }
+
+        function triggerFlash() {
+            flashElem.classList.add('active');
+            setTimeout(() => flashElem.classList.remove('active'), 350);
+        }
+
+        function captureFrame() {
+            const canvas = document.createElement('canvas');
+            canvas.width = webcam.videoWidth || 1920;
+            canvas.height = webcam.videoHeight || 1080;
+            
+            const ctx = canvas.getContext('2d');
+            if (isMirrored) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+            ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+            capturedPhotos.push(canvas.toDataURL('image/png', 1.0));
+        }
+
+        function buildPhotostrip() {
+            const canvas = outputCanvas; 
+            const ctx = canvas.getContext('2d');
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+            canvas.width = config.w; canvas.height = config.h;
+
+            let loadedCount = 0; 
+            const loadedImages = [];
+            capturedPhotos.forEach((src, idx) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedImages[idx] = img; loadedCount++;
+                    if (loadedCount === capturedPhotos.length) drawCanvasLayout(ctx, canvas, loadedImages);
+                };
+                img.src = src;
+            });
+        }
+
+        function drawCanvasLayout(ctx, canvas, images) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const count = images.length;
+            if (count === 1) {
+                ctx.drawImage(images[0], 0, 0, canvas.width, canvas.height);
+            } else {
+                const photoH = canvas.height / count;
+                images.forEach((img, i) => {
+                    ctx.drawImage(img, 0, i * photoH, canvas.width, photoH);
+                });
+            }
+
+            if (customOverlayImage) {
+                ctx.drawImage(customOverlayImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            generateQRCode();
+        }
+
+        function generateQRCode() {
+            const driveId = inputDriveLink.value.trim() || localStorage.getItem('cfg_drive_link') || "";
+            if (!driveId) {
+                qrStatus.textContent = "DRIVE FOLDER BELUM SET";
+                return;
+            }
+
+            const folderUrl = `https://drive.google.com/drive/folders/${driveId}`;
+            qrcodeContainer.innerHTML = '';
+            
+            new QRCode(qrcodeContainer, { 
+                text: folderUrl, 
+                width: 130, 
+                height: 130 
+            });
+            qrStatus.textContent = "✅ PINDAI QR UNTUK DOWNLOAD";
+        }
+
+        // PRINT & DOWNLOAD
+        printBtn.addEventListener('click', () => {
+            const printArea = document.getElementById('printArea');
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+            document.getElementById('dynamicPrintStyle').innerHTML = `@page { size: ${config.printSize}; margin: 0; }`;
+            printArea.innerHTML = '';
+            const img = new Image();
+            img.onload = () => { printArea.appendChild(img); setTimeout(() => window.print(), 300); };
+            img.src = outputCanvas.toDataURL('image/png');
+        });
+
+        downloadPngBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `photobooth-${Date.now()}.png`;
+            link.href = outputCanvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // ADMIN MODAL & CONTROLS
+        openAdminBtn.addEventListener('click', () => adminPinModal.classList.add('active'));
+        closePinBtn.addEventListener('click', () => adminPinModal.classList.remove('active'));
+
+        submitPinBtn.addEventListener('click', () => {
+            if (adminPinInput.value === DEFAULT_ADMIN_PIN) {
+                adminPinModal.classList.remove('active');
+                adminPinInput.value = '';
+                adminPanelModal.classList.add('active');
+                populateCameraList();
+            } else {
+                alert("PIN Salah!");
+            }
+        });
+
+        closeAdminPanelBtn.addEventListener('click', () => adminPanelModal.classList.remove('active'));
+
+        uploadFrameInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                await addFrameToDB(file.name, evt.target.result);
+                loadCustomerFrames();
+                alert("Frame baru berhasil diunggah!");
+            };
+            reader.readAsDataURL(file);
+        });
+
+        saveAdminSettingsBtn.addEventListener('click', () => {
+            localStorage.setItem('cfg_drive_link', inputDriveLink.value.trim());
+            alert("Pengaturan tersimpan!");
+            adminPanelModal.classList.remove('active');
+        });
+
+        window.addEventListener('load', () => {
+            initDB();
+            inputDriveLink.value = localStorage.getItem('cfg_drive_link') || '';
+        });
+    </script>
+</body>
+</html>
