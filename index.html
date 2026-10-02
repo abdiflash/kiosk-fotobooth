@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Online CDN Libraries -->
+    <!-- Reliable Online CDN Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -296,7 +296,7 @@
             font-weight: 700;
         }
 
-        select, input[type="text"] {
+        select, input[type="text"], input[type="number"] {
             background: #1e293b;
             color: var(--text-title);
             border: 1px solid var(--panel-border);
@@ -544,6 +544,99 @@
         .btn-frame-select { background: #6366f1; color: white; }
         .btn-frame-delete { background: #ef4444; color: white; }
 
+        /* --- STYLES SOFT KEYPAD TOUCHSCREEN & PROMO FEEDBACK --- */
+        .soft-keypad {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+        }
+        .keypad-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        .key-btn {
+            flex: 1;
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 12px 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .key-btn:active {
+            background: var(--accent);
+            transform: scale(0.95);
+        }
+        .key-btn.action-key {
+            background: #334155;
+            font-size: 0.8rem;
+        }
+        .key-btn.submit-key {
+            background: #059669;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .feedback-banner {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .feedback-banner.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .feedback-banner.expired {
+            display: block;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+        .feedback-banner.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .admin-promo-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.72rem;
+            margin-top: 10px;
+        }
+        .admin-promo-table th, .admin-promo-table td {
+            border: 1px solid var(--panel-border);
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .admin-promo-table th {
+            background: #0f172a;
+            color: #818cf8;
+            font-weight: 800;
+        }
+
         @media (max-width: 992px) {
             main { grid-template-columns: 1fr; }
             .modal-card { flex-direction: column; max-height: 95vh; }
@@ -566,7 +659,7 @@
             .capture-bar { bottom: 12px; padding: 6px 10px; }
             .btn-capture { padding: 12px 28px; font-size: 0.95rem; min-height: 44px; }
             
-            select, input[type="text"] { font-size: 16px !important; min-height: 44px; }
+            select, input[type="text"], input[type="number"] { font-size: 16px !important; min-height: 44px; }
         }
 
         #printArea { display: none; }
@@ -605,7 +698,7 @@
                 <span class="tool-label">License & Pass Code</span>
                 <div class="btn-group">
                     <button id="midtransPayBtn" class="btn-action btn-qris">🛒 Buy Pass (QRIS)</button>
-                    <button id="activatePassBtn" class="btn-action btn-pass">🔑 Enter Pass</button>
+                    <button id="activatePassBtn" class="btn-action btn-pass">🔑 Punya Pass Code / Voucher?</button>
                 </div>
             </div>
 
@@ -623,6 +716,7 @@
     <!-- MAIN INTERFACE -->
     <main>
         <aside class="sidebar">
+            <!-- SEKSI 1: DESAIN & FRAME OVERLAY -->
             <div class="sidebar-section-title">🎨 FRAME & DESAIN VISUAL</div>
 
             <div class="setting-card">
@@ -657,6 +751,7 @@
                 </div>
             </div>
 
+            <!-- PENGATURAN RUANG KOSONG / MARGIN TEPI BINGKAI -->
             <div class="setting-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                     <label>Margin Tepi Frame (px)</label>
@@ -692,7 +787,8 @@
 
             <hr style="border: none; border-top: 1px solid var(--panel-border); margin: 4px 0;">
 
-            <div class="sidebar-section-title">🖨️️ FORMAT CETAK & POSE</div>
+            <!-- SEKSI 2: FORMAT CETAK & POSE -->
+            <div class="sidebar-section-title">🖨️ FORMAT CETAK & POSE</div>
 
             <div class="setting-card">
                 <label>Ukuran Cetak (Standard DNP Printer)</label>
@@ -723,6 +819,7 @@
 
             <hr style="border: none; border-top: 1px solid var(--panel-border); margin: 4px 0;">
 
+            <!-- SEKSI 3: BATCH & FOTO GALERI -->
             <div class="sidebar-section-title">📁 OLAH FOTO GALERI</div>
 
             <div class="setting-card">
@@ -797,30 +894,84 @@
         </div>
     </div>
 
-    <!-- PASS ACTIVATION MODAL -->
+    <!-- PASS ACTIVATION MODAL (CUSTOMER FRONTIER WITH KEYPAD) -->
     <div class="modal" id="activationModal">
-        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white;">
-            <h3 style="margin-bottom: 8px; font-size: 1.1rem; text-align: center;">🔑 Activate Kiosk Pass</h3>
-            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 20px; text-align: center;">
-                Enter the Pass Code provided by Admin to activate photobooth duration without watermarks.
+        <div style="background: #1e293b; padding: 20px; border-radius: 16px; max-width: 460px; width:100%; border: 1px solid var(--panel-border); color: white;">
+            <h3 style="margin-bottom: 4px; font-size: 1.1rem; text-align: center;">🔑 Input Pass Code / Voucher</h3>
+            <p style="color: #94a3b8; font-size: 0.78rem; margin-bottom: 12px; text-align: center;">
+                Gunakan Soft-Keyboard layar sentuh untuk memasukkan kode promo.
             </p>
 
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 6px;">License Pass Code:</label>
-                <input type="text" id="inputPassCode" placeholder="SECRET" style="width: 100%; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 1px; padding: 12px; border-radius: 8px; border: 1px solid var(--panel-border); background: #0f172a; color: #fff; min-height: 44px;">
+            <!-- FEEDBACK MESSAGE BANNER -->
+            <div id="passFeedbackBanner" class="feedback-banner"></div>
+
+            <div style="margin-bottom: 12px;">
+                <input type="text" id="inputPassCode" placeholder="Ketik Kode (contoh: PROMO30)" readonly style="width: 100%; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 2px; padding: 12px; border-radius: 8px; border: 1px solid var(--panel-border); background: #0f172a; color: #38bdf8; text-align: center; font-size: 1.2rem; min-height: 48px;">
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button id="closeActivationBtn" style="flex: 1; background: #475569; padding: 10px; border: none; color: white; border-radius: 8px; cursor: pointer; min-height: 44px;">Cancel</button>
-                <button id="submitPassBtn" class="btn-action btn-pass" style="flex: 1; padding: 10px; min-height: 44px;">Activate Code</button>
+            <!-- KEYPAD SOFT-KEYBOARD TOUCHSCREEN -->
+            <div class="soft-keypad">
+                <div class="keypad-row">
+                    <button class="key-btn" data-key="1">1</button>
+                    <button class="key-btn" data-key="2">2</button>
+                    <button class="key-btn" data-key="3">3</button>
+                    <button class="key-btn" data-key="4">4</button>
+                    <button class="key-btn" data-key="5">5</button>
+                    <button class="key-btn" data-key="6">6</button>
+                    <button class="key-btn" data-key="7">7</button>
+                    <button class="key-btn" data-key="8">8</button>
+                    <button class="key-btn" data-key="9">9</button>
+                    <button class="key-btn" data-key="0">0</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="key-btn" data-key="Q">Q</button>
+                    <button class="key-btn" data-key="W">W</button>
+                    <button class="key-btn" data-key="E">E</button>
+                    <button class="key-btn" data-key="R">R</button>
+                    <button class="key-btn" data-key="T">T</button>
+                    <button class="key-btn" data-key="Y">Y</button>
+                    <button class="key-btn" data-key="U">U</button>
+                    <button class="key-btn" data-key="I">I</button>
+                    <button class="key-btn" data-key="O">O</button>
+                    <button class="key-btn" data-key="P">P</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="key-btn" data-key="A">A</button>
+                    <button class="key-btn" data-key="S">S</button>
+                    <button class="key-btn" data-key="D">D</button>
+                    <button class="key-btn" data-key="F">F</button>
+                    <button class="key-btn" data-key="G">G</button>
+                    <button class="key-btn" data-key="H">H</button>
+                    <button class="key-btn" data-key="J">J</button>
+                    <button class="key-btn" data-key="K">K</button>
+                    <button class="key-btn" data-key="L">L</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="key-btn" data-key="Z">Z</button>
+                    <button class="key-btn" data-key="X">X</button>
+                    <button class="key-btn" data-key="C">C</button>
+                    <button class="key-btn" data-key="V">V</button>
+                    <button class="key-btn" data-key="B">B</button>
+                    <button class="key-btn" data-key="N">N</button>
+                    <button class="key-btn" data-key="M">M</button>
+                    <button class="key-btn action-key" id="keypadBack">⌫ Hapus</button>
+                </div>
+                <div class="keypad-row" style="margin-top: 4px;">
+                    <button class="key-btn action-key" id="keypadClear" style="flex: 1; background: #dc2626;">Clear All</button>
+                    <button class="key-btn submit-key" id="submitPassBtn" style="flex: 2;">Gunakan Kode 🚀</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 14px;">
+                <button id="closeActivationBtn" style="width: 100%; background: #475569; padding: 10px; border: none; color: white; border-radius: 8px; cursor: pointer; min-height: 44px; font-weight: bold;">Batal / Tutup</button>
             </div>
         </div>
     </div>
 
-    <!-- EVENT SETTINGS MODAL -->
+    <!-- EVENT SETTINGS & PASS CODE GENERATOR MODAL (OWNER / ADMIN) -->
     <div class="modal" id="settingsModal">
-        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 440px; width:100%; border: 1px solid var(--panel-border); color: white;">
-            <h3 style="margin-bottom: 16px; font-size: 1.1rem;">⚙️ Event & System Settings</h3>
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 650px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-bottom: 16px; font-size: 1.1rem; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px;">⚙️ Event & System Settings</h3>
             
             <div style="margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -830,14 +981,77 @@
                 <input type="text" id="inputDriveLink" placeholder="Tempel ID Folder (misal: 1HB6AKtcx1_x0_BCIEnpdigU0QOOmp5oK)" style="width: 100%;">
             </div>
             
-            <div style="margin-bottom: 12px;">
+            <div style="margin-bottom: 16px;">
                 <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Current Sub-Folder Name:</label>
                 <input type="text" id="inputEventName" placeholder="e.g. Graduation 2026" style="width: 100%; margin-top: 4px;">
             </div>
 
+            <!-- MODUL PASS CODE GENERATOR (SISI OWNER / ADMIN) -->
+            <div style="margin-bottom: 20px; border: 1px solid rgba(99, 102, 241, 0.3); background: rgba(15, 23, 42, 0.6); padding: 14px; border-radius: 12px;">
+                <label style="font-size: 0.8rem; font-weight: 800; color: #818cf8; text-transform: uppercase; display: block; margin-bottom: 10px;">
+                    🎁 DYNAMIC PASS CODE GENERATOR (PEMBUAT PROMO)
+                </label>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                        <label style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Nama Kode Promo:</label>
+                        <div style="display: flex; gap: 6px; margin-top: 2px;">
+                            <input type="text" id="adminCodeInput" placeholder="PROMO30" style="text-transform: uppercase; font-weight: bold; min-height: 38px; font-size: 0.85rem;">
+                            <button id="btnGenRandomCode" style="background: #4f46e5; border: none; color: white; padding: 0 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; white-space: nowrap;">🎲 Random</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Durasi Masa Berlaku:</label>
+                        <select id="adminDurationSelect" style="min-height: 38px; font-size: 0.85rem; margin-top: 2px;">
+                            <option value="15">⏱️ 15 Menit</option>
+                            <option value="30" selected>⏱️ 30 Menit</option>
+                            <option value="60">⏱️ 1 Jam</option>
+                            <option value="today">📅 Berlaku Hari Ini (s/d 23:59)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div>
+                        <label style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Batas Pemakaian (Kuota):</label>
+                        <select id="adminUsageLimitSelect" style="min-height: 38px; font-size: 0.85rem; margin-top: 2px;">
+                            <option value="single">Single Use (1x Pakai)</option>
+                            <option value="multi">Multi Use (Tanpa Batas Kuota)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Tipe Diskon / Akses:</label>
+                        <select id="adminDiscountTypeSelect" style="min-height: 38px; font-size: 0.85rem; margin-top: 2px;">
+                            <option value="free">100% Free (Bypass Pembayaran)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="btnCreatePassCode" class="btn-action btn-pass" style="width: 100%; padding: 10px; font-size: 0.85rem; min-height: 40px; justify-content: center;">
+                    ➕ Buat & Aktifkan Kode Promo
+                </button>
+
+                <!-- TABEL DAFTAR KODE PROMO AKTIF -->
+                <div style="margin-top: 12px; max-height: 140px; overflow-y: auto;">
+                    <table class="admin-promo-table">
+                        <thead>
+                            <tr>
+                                <th>Kode</th>
+                                <th>Masa Berlaku</th>
+                                <th>Kuota</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPromoTableBody">
+                            <!-- Dynamically rendered -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div style="margin-bottom: 20px; border-top: 1px dashed var(--panel-border); padding-top: 12px;">
                 <label style="font-size: 11px; font-weight: bold; color: #10b981; text-transform: uppercase; display: block; margin-bottom: 6px;">
-                    ⏱️ PASS STATUS & EXPIRY:
+                    ⏱️ STATUS LISENSI KIOSK:
                 </label>
                 <div style="padding: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
                     <span id="passStatusText" style="font-weight: 600; font-size: 0.85rem;">Checking status...</span>
@@ -868,6 +1082,7 @@
             </div>
 
             <div id="frameGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; overflow-y: auto; padding-right: 4px; flex: 1; min-height: 200px;">
+                <!-- Frame cards rendered dynamically via JS -->
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px solid var(--panel-border); padding-top: 12px;">
@@ -900,32 +1115,6 @@
                         <li>Di kolom pencarian email, masukkan email sistem skrip: <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #a7f3d0; font-weight: bold;">abdiflash@gmail.com</code></li>
                         <li>Pastikan hak akses diubah menjadi <strong>Editor</strong>.</li>
                         <li>Klik <strong>Send / Done</strong>.</li>
-                    </ol>
-                    <div style="margin-top: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 8px 12px; border-radius: 6px; font-size: 0.78rem; color: #fbbf24;">
-                        <strong>Penting:</strong> Langkah pembagian akses sebagai Editor wajib dilakukan agar sistem memiliki izin untuk membuat sub-folder event dan menyimpan file foto ke dalam folder kamu.
-                    </div>
-                </div>
-
-                <div>
-                    <h4 style="color: #f8fafc; margin-bottom: 6px; font-size: 0.95rem;">Langkah 2: Salin ID Folder Google Drive</h4>
-                    <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-                        <li>Buka folder yang baru kamu buat tersebut di browser.</li>
-                        <li>Perhatikan alamat URL di bilah atas browser kamu:
-                            <div style="background: #090d16; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; margin: 4px 0; color: #94a3b8; word-break: break-all;">
-                                https://drive.google.com/drive/folders/<span style="color: #a7f3d0; font-weight: bold;">1HB6AKtcx1_x0_BCIEnpdigU0QOOmp5oK</span>?usp=sharing
-                            </div>
-                        </li>
-                        <li>Salin deretan kode acak yang ada di antara <code style="background: #1e293b; padding: 2px 4px; border-radius: 4px;">/folders/</code> dan <code style="background: #1e293b; padding: 2px 4px; border-radius: 4px;">?</code> (Contoh ID Folder: <code style="color: #a7f3d0;">1HB6AKtcx1_x0_BCIEnpdigU0QOOmp5oK</code>).</li>
-                    </ol>
-                </div>
-
-                <div>
-                    <h4 style="color: #f8fafc; margin-bottom: 6px; font-size: 0.95rem;">Langkah 3: Input ID Folder ke Aplikasi Photobooth</h4>
-                    <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-                        <li>Buka aplikasi photobooth.</li>
-                        <li>Masuk ke menu <strong>Settings / Pengaturan Event</strong>.</li>
-                        <li>Tempel (paste) kode ID Folder yang sudah disalin ke kolom <strong>Master Folder ID</strong>.</li>
-                        <li>Klik <strong>Save Settings</strong>.</li>
                     </ol>
                 </div>
             </div>
@@ -989,6 +1178,249 @@
         const openDriveGuideBtn = document.getElementById('openDriveGuideBtn'), driveGuideModal = document.getElementById('driveGuideModal'), closeDriveGuideBtn = document.getElementById('closeDriveGuideBtn'), gotItDriveGuideBtn = document.getElementById('gotItDriveGuideBtn');
 
         const importBatchBtn = document.getElementById('importBatchBtn'), batchFileInput = document.getElementById('batchFileInput'), batchProgressModal = document.getElementById('batchProgressModal'), batchStatusText = document.getElementById('batchStatusText'), batchProgressBar = document.getElementById('batchProgressBar');
+
+        // PROMO DYNAMIC PASS CODE DOM ELEMENTS
+        const passFeedbackBanner = document.getElementById('passFeedbackBanner');
+        const adminCodeInput = document.getElementById('adminCodeInput');
+        const btnGenRandomCode = document.getElementById('btnGenRandomCode');
+        const adminDurationSelect = document.getElementById('adminDurationSelect');
+        const adminUsageLimitSelect = document.getElementById('adminUsageLimitSelect');
+        const adminDiscountTypeSelect = document.getElementById('adminDiscountTypeSelect');
+        const btnCreatePassCode = document.getElementById('btnCreatePassCode');
+        const adminPromoTableBody = document.getElementById('adminPromoTableBody');
+
+        // ==========================================
+        // DYNAMIC PASS CODE SYSTEM (STORAGE & LOGIC)
+        // ==========================================
+        function getDynamicPasscodes() {
+            try {
+                return JSON.parse(localStorage.getItem('pb_dynamic_passcodes') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveDynamicPasscodes(codes) {
+            localStorage.setItem('pb_dynamic_passcodes', JSON.stringify(codes));
+            renderAdminPassTable();
+        }
+
+        function generateRandomCodeStr(length = 8) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let res = 'PROMO';
+            for (let i = 0; i < 4; i++) {
+                res += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return res;
+        }
+
+        if (btnGenRandomCode) {
+            btnGenRandomCode.addEventListener('click', () => {
+                adminCodeInput.value = generateRandomCodeStr();
+            });
+        }
+
+        if (btnCreatePassCode) {
+            btnCreatePassCode.addEventListener('click', () => {
+                const codeStr = (adminCodeInput.value || generateRandomCodeStr()).trim().toUpperCase();
+                if (!codeStr) {
+                    alert("Kode promo tidak boleh kosong.");
+                    return;
+                }
+
+                const durVal = adminDurationSelect.value;
+                const limitVal = adminUsageLimitSelect.value;
+                const discountVal = adminDiscountTypeSelect.value;
+
+                let expiryTimestamp = 0;
+                const now = Date.now();
+
+                if (durVal === 'today') {
+                    const endOfDay = new Date();
+                    endOfDay.setHours(23, 59, 59, 999);
+                    expiryTimestamp = endOfDay.getTime();
+                } else {
+                    const mins = parseInt(durVal, 10) || 30;
+                    expiryTimestamp = now + (mins * 60 * 1000);
+                }
+
+                const newCodeObj = {
+                    id: 'PASS_' + Date.now(),
+                    code: codeStr,
+                    startTime: now,
+                    expiryTime: expiryTimestamp,
+                    durationMins: durVal === 'today' ? 's/d 23:59' : durVal + 'm',
+                    usageLimitType: limitVal,
+                    usageCount: 0,
+                    maxUsage: limitVal === 'single' ? 1 : 999999,
+                    discountType: discountVal,
+                    createdAt: now
+                };
+
+                const currentCodes = getDynamicPasscodes();
+                currentCodes.push(newCodeObj);
+                saveDynamicPasscodes(currentCodes);
+
+                adminCodeInput.value = '';
+                alert(`✅ Kode Promo [${codeStr}] berhasil dibuat!`);
+            });
+        }
+
+        function renderAdminPassTable() {
+            if (!adminPromoTableBody) return;
+            const codes = getDynamicPasscodes();
+            const now = Date.now();
+            adminPromoTableBody.innerHTML = '';
+
+            if (codes.length === 0) {
+                adminPromoTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">Belum ada kode promo aktif.</td></tr>`;
+                return;
+            }
+
+            codes.forEach((item, index) => {
+                const isExpired = now > item.expiryTime;
+                const isLimitReached = item.usageCount >= item.maxUsage;
+                let statusBadge = '';
+
+                if (isExpired) {
+                    statusBadge = `<span style="color:#f59e0b; font-weight:bold;">KADALUARSA</span>`;
+                } else if (isLimitReached) {
+                    statusBadge = `<span style="color:#ef4444; font-weight:bold;">KUOTA HABIS</span>`;
+                } else {
+                    const diffMins = Math.ceil((item.expiryTime - now) / (1000 * 60));
+                    statusBadge = `<span style="color:#10b981; font-weight:bold;">AKTIF (${diffMins}m)</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.code}</strong></td>
+                    <td>${statusBadge}</td>
+                    <td>${item.usageCount} / ${item.usageLimitType === 'single' ? '1' : '∞'}</td>
+                    <td><button style="background:#ef4444; border:none; color:white; border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="deleteDynamicPasscode('${item.id}')">✕</button></td>
+                `;
+                adminPromoTableBody.appendChild(tr);
+            });
+        }
+
+        window.deleteDynamicPasscode = function(id) {
+            let codes = getDynamicPasscodes();
+            codes = codes.filter(c => c.id !== id);
+            saveDynamicPasscodes(codes);
+        };
+
+        // SOFT-KEYPAD LAYAR SENTUH EVENT LISTENERS
+        document.querySelectorAll('.key-btn[data-key]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                inputPassCode.value += btn.getAttribute('data-key');
+            });
+        });
+
+        document.getElementById('keypadBack').addEventListener('click', () => {
+            inputPassCode.value = inputPassCode.value.slice(0, -1);
+        });
+
+        document.getElementById('keypadClear').addEventListener('click', () => {
+            inputPassCode.value = '';
+            showFeedbackBanner('', '');
+        });
+
+        function showFeedbackBanner(type, message) {
+            passFeedbackBanner.className = 'feedback-banner';
+            if (!type) {
+                passFeedbackBanner.style.display = 'none';
+                return;
+            }
+            passFeedbackBanner.classList.add(type);
+            passFeedbackBanner.textContent = message;
+            passFeedbackBanner.style.display = 'block';
+        }
+
+        // VERIFIKASI LOGIKA PASS CODE DYNAMIC & REGULER
+        async function verifyAndApplyPassCode(code) {
+            const cleanCode = code.trim().toUpperCase();
+            if (!cleanCode) {
+                showFeedbackBanner('error', "Kode Pass Code tidak boleh kosong.");
+                return false;
+            }
+
+            // 1. CEK DYNAMIC PASS CODES (KODE PROMO BERDURASI)
+            const dynamicCodes = getDynamicPasscodes();
+            const foundPromo = dynamicCodes.find(c => c.code === cleanCode);
+
+            if (foundPromo) {
+                const now = Date.now();
+                // Check 1: Masa berlaku waktu
+                if (now > foundPromo.expiryTime) {
+                    showFeedbackBanner('expired', "❌ Kode Promo Sudah Hangus / Kadaluarsa (Batas Waktu Habis)");
+                    return false;
+                }
+
+                // Check 2: Kuota pemakaian
+                if (foundPromo.usageCount >= foundPromo.maxUsage) {
+                    showFeedbackBanner('error', "❌ Kode Tidak Ditemukan atau Kuota Penggunaan Sudah Habis");
+                    return false;
+                }
+
+                // VALIDASI BERHASIL! Update usage count
+                foundPromo.usageCount += 1;
+                saveDynamicPasscodes(dynamicCodes);
+
+                // Set expiry lisensi Kiosk ke waktu kadaluarsa promo tersebut
+                localStorage.setItem('cfg_expiry_date', new Date(foundPromo.expiryTime).toISOString());
+                updateLicenseStatusUI();
+
+                showFeedbackBanner('success', "✅ Pass Code Valid! Akses Gratis Berhasil");
+
+                setTimeout(() => {
+                    activationModal.classList.remove('active');
+                    showFeedbackBanner('', '');
+                    inputPassCode.value = '';
+                }, 1200);
+
+                return true;
+            }
+
+            // 2. CEK KODE DEVELOPER / HARDCODED PASS
+            if (cleanCode === 'SUPERADMIN2026') {
+                localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
+                showFeedbackBanner('success', "✅ Pass Code Valid! Akses Gratis Berhasil (Superadmin)");
+                updateLicenseStatusUI();
+                setTimeout(() => { activationModal.classList.remove('active'); showFeedbackBanner('', ''); inputPassCode.value = ''; }, 1000);
+                return true;
+            }
+
+            if (cleanCode === 'TEST30M' || cleanCode === 'TEST30MIN') {
+                addPassMinutes(30);
+                showFeedbackBanner('success', "✅ Pass Code Valid! Akses Gratis Berhasil (+30 Menit)");
+                setTimeout(() => { activationModal.classList.remove('active'); showFeedbackBanner('', ''); inputPassCode.value = ''; }, 1000);
+                return true;
+            }
+
+            // 3. CEK FORMAT LISENSI DENGAN SHA-256 CHECKSUM (PASS24-...)
+            const match = cleanCode.match(/^PASS(\d+)-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
+            if (match) {
+                const hours = parseInt(match[1], 10);
+                const salt = match[2];
+                const checksum = match[3];
+
+                const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
+                const msgBuffer = new TextEncoder().encode(input);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
+
+                if (checksum === calculatedChecksum) {
+                    addPassHours(hours);
+                    showFeedbackBanner('success', "✅ Pass Code Valid! Akses Gratis Berhasil");
+                    setTimeout(() => { activationModal.classList.remove('active'); showFeedbackBanner('', ''); inputPassCode.value = ''; }, 1000);
+                    return true;
+                }
+            }
+
+            // JIKA KODE TIDAK DITEMUKAN
+            showFeedbackBanner('error', "❌ Kode Tidak Ditemukan atau Kuota Penggunaan Sudah Habis");
+            return false;
+        }
 
         // INDEXEDDB SYSTEM
         function initDB() {
@@ -1314,7 +1746,7 @@
                 
                 if (minsLeft <= 60) {
                     licenseBadge.className = 'license-badge active';
-                    licenseBadge.innerHTML = `🟢 Pass Active (${minsLeft}m Left)`;
+                    licenseBadge.innerHTML = `🟢 Promo Active (${minsLeft}m Left)`;
                 } else {
                     const hoursLeft = Math.floor(minsLeft / 60);
                     if (hoursLeft >= 48) {
@@ -1340,18 +1772,18 @@
 
             if (expiryStr && !isNaN(new Date(expiryStr).getTime()) && new Date(expiryStr).getTime() > now) {
                 const dateObj = new Date(expiryStr);
-                const formattedDate = dateObj.toLocaleString('en-US', {
+                const formattedDate = dateObj.toLocaleString('id-ID', {
                     day: '2-digit', month: '2-digit', year: 'numeric',
                     hour: '2-digit', minute: '2-digit'
                 });
                 passStatusText.innerHTML = `
-                    <span style="color: #10b981; font-weight: bold;">🟢 Pass Active</span><br>
-                    <span style="color: #cbd5e1; font-size: 0.8rem;">Valid until: ${formattedDate}</span>
+                    <span style="color: #10b981; font-weight: bold;">🟢 Pass / Promo Active</span><br>
+                    <span style="color: #cbd5e1; font-size: 0.8rem;">Berlaku s/d: ${formattedDate}</span>
                 `;
             } else {
                 passStatusText.innerHTML = `
-                    <span style="color: #f59e0b; font-weight: bold;">🟠 Free Mode (Watermark Active)</span><br>
-                    <span style="color: #94a3b8; font-size: 0.8rem;">No expiry limit. Purchase Pass to remove watermark.</span>
+                    <span style="color: #f59e0b; font-weight: bold;">🟠 Free Mode (Watermark Aktif)</span><br>
+                    <span style="color: #94a3b8; font-size: 0.8rem;">Gunakan Pass Code promo untuk akses cetak tanpa watermark.</span>
                 `;
             }
         }
@@ -1370,52 +1802,6 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             updateLicenseStatusUI();
-        }
-
-        async function verifyAndApplyPassCode(code) {
-            const cleanCode = code.trim().toUpperCase();
-            if (!cleanCode) {
-                alert("License code cannot be empty.");
-                return false;
-            }
-
-            if (cleanCode === 'SUPERADMIN2026') {
-                localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
-                alert("Developer Access Activated (2030)!");
-                updateLicenseStatusUI();
-                return true;
-            }
-
-            if (cleanCode === 'TEST30M' || cleanCode === 'TEST30MIN') {
-                addPassMinutes(30);
-                alert("🎉 Passcode Testing 30 Menit Berhasil Diaktifkan!");
-                return true;
-            }
-
-            const match = cleanCode.match(/^PASS(\d+)-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
-            if (!match) {
-                alert("Invalid Pass Code format!");
-                return false;
-            }
-
-            const hours = parseInt(match[1], 10);
-            const salt = match[2];
-            const checksum = match[3];
-
-            const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
-            const msgBuffer = new TextEncoder().encode(input);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
-
-            if (checksum === calculatedChecksum) {
-                addPassHours(hours);
-                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
-                return true;
-            } else {
-                alert("Invalid License Code.");
-                return false;
-            }
         }
 
         function addPassMinutes(minsToAdd) {
@@ -1519,16 +1905,16 @@
             });
         }
 
-        if (activatePassBtn) activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
+        if (activatePassBtn) activatePassBtn.addEventListener('click', () => {
+            showFeedbackBanner('', '');
+            inputPassCode.value = '';
+            activationModal.classList.add('active');
+        });
         if (closeActivationBtn) closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
         
         if (submitPassBtn) {
             submitPassBtn.addEventListener('click', async () => {
-                const isSuccess = await verifyAndApplyPassCode(inputPassCode.value);
-                if (isSuccess) {
-                    inputPassCode.value = '';
-                    activationModal.classList.remove('active');
-                }
+                await verifyAndApplyPassCode(inputPassCode.value);
             });
         }
 
@@ -1586,6 +1972,7 @@
         if (closeDriveGuideBtn) closeDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.remove('active'));
         if (gotItDriveGuideBtn) gotItDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.remove('active'));
 
+        // LOGIKA PEMROSESAN BATCH & AUTO-OVERLAY FOTO GALERI
         if (importBatchBtn && batchFileInput) {
             importBatchBtn.addEventListener('click', () => batchFileInput.click());
             batchFileInput.addEventListener('change', async (e) => {
@@ -1857,6 +2244,7 @@
                 inputDriveLink.value = localStorage.getItem('cfg_drive_link') || '';
                 inputEventName.value = localStorage.getItem('cfg_event_name') || eventTitle.value || '';
                 updateEventSettingsPassStatus();
+                renderAdminPassTable();
                 settingsModal.classList.add('active');
             });
         }
@@ -1868,14 +2256,14 @@
                 const linkVal = inputDriveLink.value.trim();
                 const eventVal = inputEventName.value.trim();
 
-                if (!linkVal) { alert("Google Drive Master Folder ID is required!"); return; }
+                if (!linkVal) { alert("Google Drive Master Folder ID wajib diisi!"); return; }
 
                 localStorage.setItem('cfg_drive_link', linkVal);
                 localStorage.setItem('cfg_event_name', eventVal || 'Photobooth Event');
 
                 if (eventVal) { eventTitle.value = eventVal; saveSettings(); }
 
-                alert("Settings saved successfully!");
+                alert("Pengaturan berhasil disimpan!");
                 settingsModal.classList.remove('active');
                 updateLicenseStatusUI();
             });
@@ -2273,6 +2661,7 @@
 
         window.addEventListener('online', processOfflineQueue);
         setInterval(processOfflineQueue, 15000);
+        setInterval(updateLicenseStatusUI, 10000); // Live countdown license badge interval
 
         window.addEventListener('load', () => {
             initCameras();
