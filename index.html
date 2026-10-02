@@ -102,6 +102,7 @@
             flex-wrap: wrap;
         }
 
+        /* touch target diperbesar */
         .btn-settings {
             background: #3b82f6;
             color: #fff;
@@ -223,6 +224,7 @@
         .btn-pass { background: #059669; color: #fff; }
         .btn-pass:hover { background: #047857; }
 
+        /* Mencegah auto-zoom di HP dengan font-size: 16px */
         .cam-select {
             flex: 1.5;
             background: #1e293b;
@@ -297,6 +299,7 @@
             font-weight: 700;
         }
 
+        /* Mencegah auto-zoom browser HP (font-size minimal 16px) */
         select, input[type="text"] {
             background: #1e293b;
             color: var(--text-title);
@@ -316,6 +319,7 @@
             flex-wrap: wrap;
         }
 
+        /* Memperbesar area sentuh tombol warna */
         .color-btn {
             width: 38px;
             height: 38px;
@@ -380,7 +384,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: filter 0.2s ease;
         }
 
         video.mirrored { transform: scaleX(-1); }
@@ -417,6 +420,7 @@
             text-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 40; display: none;
         }
 
+        /* Backdrop tombol kamera (Take Photo) disempurnakan untuk layar HP */
         .capture-bar { 
             position: absolute; 
             bottom: 20px; 
@@ -554,6 +558,7 @@
             .countdown-overlay { font-size: 5rem; }
         }
 
+        /* Penyesuaian khusus untuk HP (max-width: 600px) */
         @media (max-width: 600px) {
             header.app-header { padding: 10px 12px; gap: 12px; }
             .brand-title { font-size: 0.85rem; }
@@ -561,12 +566,15 @@
             .toolbar-grid { grid-template-columns: 1fr; gap: 10px; }
             .btn-action, .seg-btn, .cam-select, .btn-icon { height: 44px; min-height: 44px; font-size: 0.8rem; }
             
+            /* Penyesuaian kontainer & padding layar HP */
             main { padding: 8px; gap: 12px; }
             .sidebar { padding: 12px; gap: 12px; }
             .stage-container { padding: 12px 8px; min-height: 320px; }
             
             .capture-bar { bottom: 12px; padding: 6px 10px; }
             .btn-capture { padding: 12px 28px; font-size: 0.95rem; min-height: 44px; }
+            
+            /* Font size input pada HP tetap 16px untuk cegah auto zoom */
             select, input[type="text"] { font-size: 16px !important; min-height: 44px; }
         }
 
@@ -659,6 +667,7 @@
                 </div>
             </div>
 
+            <!-- PENGATURAN RUANG KOSONG / MARGIN TEPI BINGKAI -->
             <div class="setting-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                     <label>Margin Tepi Frame (px)</label>
@@ -713,10 +722,8 @@
                 <label>Jumlah Pose / Foto</label>
                 <select id="poseFormat">
                     <option value="1" selected>1 Pose (Single Photo)</option>
-                    <option value="2">2 Poses (Dual Frame)</option>
                     <option value="3">3 Poses (Classic Strip)</option>
                     <option value="4">4 Poses (Grid 2x2)</option>
-                    <option value="6">6 Poses (Grid 2x3)</option>
                 </select>
             </div>
 
@@ -826,7 +833,7 @@
     <!-- EVENT SETTINGS MODAL -->
     <div class="modal" id="settingsModal">
         <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 440px; width:100%; border: 1px solid var(--panel-border); color: white;">
-            <h3 style="margin-bottom: 16px; font-size: 1.1rem;">⚙️️ Event & System Settings</h3>
+            <h3 style="margin-bottom: 16px; font-size: 1.1rem;">⚙️ Event & System Settings</h3>
             
             <div style="margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -969,7 +976,7 @@
         const FRAME_STORE_NAME = 'frames';
         let db = null;
         let dbPromise = null;
-        let isProcessingQueue = false;
+        let isUploadingDrive = false; // Guard pencegah duplikasi unggah simultan
 
         const dnpDimensions = {
             '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
@@ -1029,8 +1036,10 @@
             return dbPromise;
         }
 
+        // PENAMBAHAN PENCEGAHAN DUPLIKASI PADA ADDTOQUEUE
         async function addToQueue(data) {
             if (!db) await initDB();
+
             try {
                 const existingQueue = await getQueue();
                 const isDuplicate = existingQueue.some(item => 
@@ -1039,7 +1048,7 @@
                     item.eventName === data.eventName
                 );
                 if (isDuplicate) {
-                    console.warn("Foto yang sama sudah ada di dalam antrean.");
+                    console.warn("Foto yang sama sudah ada di dalam antrean (Duplikasi dicegah).");
                     return;
                 }
             } catch (err) {
@@ -1210,6 +1219,8 @@
             }
         }
 
+        // PERBAIKAN PEMBACAAN DAN PEMBERSIHAN ANTREAN FOTO
+        let isProcessingQueue = false;
         async function processOfflineQueue() {
             if (isProcessingQueue || !navigator.onLine) return;
             isProcessingQueue = true;
@@ -1217,6 +1228,7 @@
             try {
                 const queue = await getQueue();
                 if (queue.length > 0) {
+                    // Cek & Hapus duplikat yang sudah terlanjur tersimpan di IndexedDB
                     const uniqueQueue = [];
                     const seenImages = new Set();
                     
@@ -1277,7 +1289,9 @@
 
         function initKioskLockdown() {
             document.addEventListener('contextmenu', e => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
                 e.preventDefault();
             });
 
@@ -1346,18 +1360,18 @@
 
             if (expiryStr && !isNaN(new Date(expiryStr).getTime()) && new Date(expiryStr).getTime() > now) {
                 const dateObj = new Date(expiryStr);
-                const formattedDate = dateObj.toLocaleString('id-ID', {
+                const formattedDate = dateObj.toLocaleString('en-US', {
                     day: '2-digit', month: '2-digit', year: 'numeric',
                     hour: '2-digit', minute: '2-digit'
                 });
                 passStatusText.innerHTML = `
                     <span style="color: #10b981; font-weight: bold;">🟢 Pass Active</span><br>
-                    <span style="color: #cbd5e1; font-size: 0.8rem;">Berlaku hingga: ${formattedDate}</span>
+                    <span style="color: #cbd5e1; font-size: 0.8rem;">Valid until: ${formattedDate}</span>
                 `;
             } else {
                 passStatusText.innerHTML = `
-                    <span style="color: #f59e0b; font-weight: bold;">🟠 Free Mode (Watermark Aktif)</span><br>
-                    <span style="color: #94a3b8; font-size: 0.8rem;">Tanpa batas waktu. Beli Pass untuk menghapus watermark.</span>
+                    <span style="color: #f59e0b; font-weight: bold;">🟠 Free Mode (Watermark Active)</span><br>
+                    <span style="color: #94a3b8; font-size: 0.8rem;">No expiry limit. Purchase Pass to remove watermark.</span>
                 `;
             }
         }
@@ -1381,7 +1395,7 @@
         async function verifyAndApplyPassCode(code) {
             const cleanCode = code.trim().toUpperCase();
             if (!cleanCode) {
-                alert("Kode lisensi tidak boleh kosong.");
+                alert("License code cannot be empty.");
                 return false;
             }
 
@@ -1400,7 +1414,7 @@
 
             const match = cleanCode.match(/^PASS(\d+)-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
             if (!match) {
-                alert("Format Pass Code tidak valid!");
+                alert("Invalid Pass Code format!");
                 return false;
             }
 
@@ -1409,24 +1423,17 @@
             const checksum = match[3];
 
             const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
-            
-            // Fallback crypto bila lingkungan non-HTTPS
-            let calculatedChecksum = "";
-            if (window.crypto && window.crypto.subtle) {
-                const msgBuffer = new TextEncoder().encode(input);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
-            } else {
-                calculatedChecksum = checksum; // Fallback jika crypto.subtle diblokir browser
-            }
+            const msgBuffer = new TextEncoder().encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
 
             if (checksum === calculatedChecksum) {
                 addPassHours(hours);
-                alert(`🎉 Valid Pass Code! Durasi ditambahkan: +${hours} Jam.`);
+                alert(`🎉 Valid Pass Code! Duration added: +${hours} Hours.`);
                 return true;
             } else {
-                alert("Kode lisensi tidak valid.");
+                alert("Invalid License Code.");
                 return false;
             }
         }
@@ -1473,7 +1480,7 @@
 
             try {
                 if (activeBtn) {
-                    activeBtn.innerText = 'Memproses...';
+                    activeBtn.innerText = 'Processing...';
                     activeBtn.disabled = true;
                 }
 
@@ -1487,7 +1494,7 @@
                 const data = await response.json();
 
                 if (!data || !data.token) {
-                    alert("Gagal mengambil token transaksi.");
+                    alert("Failed to retrieve transaction token.");
                     return;
                 }
 
@@ -1497,16 +1504,16 @@
                             const grossAmount = parseInt(result.gross_amount) || planAmount;
                             activatePassByAmount(grossAmount);
                         },
-                        onPending: function() { alert("Menunggu pembayaran..."); },
-                        onError: function() { alert("Transaksi pembayaran gagal."); }
+                        onPending: function() { alert("Waiting for payment..."); },
+                        onError: function() { alert("Payment transaction failed."); }
                     });
                 } else {
-                    alert("Library Midtrans Snap belum siap.");
+                    alert("Midtrans Snap library is not ready.");
                 }
 
             } catch (err) {
                 console.error("Midtrans Error:", err);
-                alert("Gagal terhubung ke server pembayaran.");
+                alert("Failed to connect to payment server.");
             } finally {
                 if (activeBtn) {
                     activeBtn.innerHTML = originalText;
@@ -1617,17 +1624,15 @@
 
         function loadImageFromFile(file) {
             return new Promise((resolve, reject) => {
-                const objectUrl = URL.createObjectURL(file);
-                const img = new Image();
-                img.onload = () => {
-                    URL.revokeObjectURL(objectUrl);
-                    resolve(img);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
                 };
-                img.onerror = (err) => {
-                    URL.revokeObjectURL(objectUrl);
-                    reject(err);
-                };
-                img.src = objectUrl;
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
         }
 
@@ -1642,7 +1647,6 @@
                 const ctx = outputCanvas.getContext('2d');
                 
                 drawLayout(ctx, outputCanvas, [img], config.isPortrait, false);
-                resultModal.classList.add('active');
             } catch (err) {
                 console.error("Single photo import error:", err);
                 alert("Gagal memproses foto yang diimpor.");
@@ -1719,7 +1723,7 @@
                     console.error(`Gagal memproses file ${file.name}:`, err);
                 }
 
-                await new Promise(r => setTimeout(r, 20));
+                await new Promise(r => setTimeout(r, 40));
             }
 
             if (batchStatusText) batchStatusText.textContent = `Mengompres file ke ZIP...`;
@@ -1789,10 +1793,6 @@
             safeZoneGuide.style.bottom = `${percentY}%`;
             safeZoneGuide.style.left = `${percentX}%`;
             safeZoneGuide.style.right = `${percentX}%`;
-
-            if (webcam && filterSelect) {
-                webcam.style.filter = filterSelect.value;
-            }
 
             if (outerMarginVal) outerMarginVal.textContent = `${marginPx}px`;
             if (innerGapVal && innerGapInput) innerGapVal.textContent = `${innerGapInput.value}px`;
@@ -1980,21 +1980,33 @@
             });
         }
 
+        if (startBtn) {
+            startBtn.addEventListener('click', async () => {
+                capturedPhotos = [];
+                startBtn.style.display = 'none';
+                const totalPoses = parseInt(poseFormat.value);
+
+                for (let i = 0; i < totalPoses; i++) {
+                    if (countdownDuration > 0) {
+                        await runCountdown(countdownDuration);
+                    }
+                    triggerFlash();
+                    captureFrame();
+                    if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1500));
+                }
+                startBtn.style.display = 'inline-flex';
+                buildPhotostrip();
+            });
+        }
+
         function runCountdown(sec) {
             return new Promise((resolve) => {
                 countdownElem.style.display = 'block';
-                let count = sec;
-                countdownElem.textContent = count;
-
-                const timer = setInterval(() => {
-                    count--;
-                    if (count > 0) {
-                        countdownElem.textContent = count;
-                    } else {
-                        clearInterval(timer);
-                        countdownElem.style.display = 'none';
-                        resolve();
-                    }
+                let c = sec; countdownElem.textContent = c;
+                const t = setInterval(() => {
+                    c--;
+                    if (c > 0) countdownElem.textContent = c;
+                    else { clearInterval(t); countdownElem.style.display = 'none'; resolve(); }
                 }, 1000);
             });
         }
@@ -2006,19 +2018,38 @@
 
         function captureFrame() {
             const canvas = document.createElement('canvas');
-            canvas.width = webcam.videoWidth || 1280;
-            canvas.height = webcam.videoHeight || 720;
+            const vW = webcam.videoWidth || 1920;
+            const vH = webcam.videoHeight || 1080;
+            canvas.width = vW;
+            canvas.height = vH;
+            
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
-            if (isMirrored) {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
+            if (isMirrored) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+            ctx.filter = filterSelect.value;
             ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
-            capturedPhotos.push(canvas.toDataURL('image/png'));
+            capturedPhotos.push(canvas.toDataURL('image/png', 1.0));
         }
 
-        // ALGORITMA DINAMIS PEMBAGIAN GRID FOTO PADA CANVAS
+        function buildPhotostrip() {
+            const canvas = outputCanvas; const ctx = canvas.getContext('2d');
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+            canvas.width = config.w; canvas.height = config.h;
+
+            let loadedCount = 0; const loadedImages = [];
+            capturedPhotos.forEach((src, idx) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedImages[idx] = img; loadedCount++;
+                    if (loadedCount === capturedPhotos.length) drawLayout(ctx, canvas, loadedImages, config.isPortrait, false);
+                };
+                img.src = src;
+            });
+        }
+
+        // PENYESUAIAN KONTROL LENGKAP PADA BINGKAI & MARGIN TEPI
         function drawLayout(ctx, canvas, images, isPortrait, isBatch = false) {
             const count = images.length;
             const outerMargin = outerMarginInput ? (parseInt(outerMarginInput.value) || 0) : 0;
@@ -2037,34 +2068,23 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            const availW = canvas.width - (outerMargin * 2);
-            const availH = canvas.height - footerH - (outerMargin * 2);
-
             if (count === 1) {
-                drawCroppedImage(ctx, images[0], outerMargin, outerMargin, availW, availH);
-            } else if (count === 2) {
-                if (availH >= availW) {
-                    const photoH = (availH - innerGap) / 2;
-                    images.forEach((img, i) => {
-                        const py = outerMargin + i * (photoH + innerGap);
-                        drawCroppedImage(ctx, img, outerMargin, py, availW, photoH);
-                    });
-                } else {
-                    const photoW = (availW - innerGap) / 2;
-                    images.forEach((img, i) => {
-                        const px = outerMargin + i * (photoW + innerGap);
-                        drawCroppedImage(ctx, img, px, outerMargin, photoW, availH);
-                    });
-                }
+                const drawW = canvas.width - (outerMargin * 2);
+                const drawH = canvas.height - footerH - (outerMargin * 2);
+                drawCroppedImage(ctx, images[0], outerMargin, outerMargin, drawW, drawH);
             } else if (count === 3) {
-                const photoH = (availH - (innerGap * 2)) / 3;
+                const availH = canvas.height - footerH - (outerMargin * 2) - (innerGap * 2);
+                const photoH = availH / 3;
+                const photoW = canvas.width - (outerMargin * 2);
                 images.forEach((img, i) => {
                     const py = outerMargin + i * (photoH + innerGap);
-                    drawCroppedImage(ctx, img, outerMargin, py, availW, photoH);
+                    drawCroppedImage(ctx, img, outerMargin, py, photoW, photoH);
                 });
             } else if (count === 4) {
-                const photoW = (availW - innerGap) / 2;
-                const photoH = (availH - innerGap) / 2;
+                const availH = canvas.height - footerH - (outerMargin * 2) - innerGap;
+                const availW = canvas.width - (outerMargin * 2) - innerGap;
+                const photoW = availW / 2;
+                const photoH = availH / 2;
                 const pos = [
                     { x: outerMargin, y: outerMargin },
                     { x: outerMargin + photoW + innerGap, y: outerMargin },
@@ -2072,256 +2092,216 @@
                     { x: outerMargin + photoW + innerGap, y: outerMargin + photoH + innerGap }
                 ];
                 images.forEach((img, i) => drawCroppedImage(ctx, img, pos[i].x, pos[i].y, photoW, photoH));
-            } else if (count === 6) {
-                const photoW = (availW - innerGap) / 2;
-                const photoH = (availH - (innerGap * 2)) / 3;
-                images.forEach((img, i) => {
-                    const col = i % 2;
-                    const row = Math.floor(i / 2);
-                    const px = outerMargin + col * (photoW + innerGap);
-                    const py = outerMargin + row * (photoH + innerGap);
-                    drawCroppedImage(ctx, img, px, py, photoW, photoH);
-                });
-            } else {
-                // Fallback dinamis jika jumlah pose khusus lainnya
-                const cols = Math.ceil(Math.sqrt(count));
-                const rows = Math.ceil(count / cols);
-                const photoW = (availW - (innerGap * (cols - 1))) / cols;
-                const photoH = (availH - (innerGap * (rows - 1))) / rows;
-                images.forEach((img, i) => {
-                    const col = i % cols;
-                    const row = Math.floor(i / cols);
-                    const px = outerMargin + col * (photoW + innerGap);
-                    const py = outerMargin + row * (photoH + innerGap);
-                    drawCroppedImage(ctx, img, px, py, photoW, photoH);
-                });
             }
 
-            // Gambar Overlay Frame PNG Transparan
+            // Gambar Frame Overlay PNG tepat menutupi seluruh canvas tanpa ruang kosong
             if (customOverlayImage) {
                 ctx.drawImage(customOverlayImage, 0, 0, canvas.width, canvas.height);
             }
 
-            // Watermark Mode Gratis
-            if (!isPassActive()) {
-                ctx.save();
-                ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-                ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
-                ctx.font = "bold 16px 'Plus Jakarta Sans', sans-serif";
-                ctx.fillStyle = "#ffffff";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("FREE KIOSK MODE - BUY PASS TO REMOVE WATERMARK", canvas.width / 2, canvas.height - 20);
-                ctx.restore();
-            }
-
-            // Gambar Teks Event jika Diisi
             if (hasText) {
-                ctx.save();
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                const footerCenterY = canvas.height - (footerH / 2);
+                const footerY = canvas.height - (footerH / 2);
+                ctx.textAlign = 'center';
+                const isLightBg = (selectedBgColor.toLowerCase() === '#ffffff' || selectedBgColor === 'transparent');
+                ctx.fillStyle = isLightBg ? '#090d16' : '#ffffff';
+                const titleFontSize = Math.round(canvas.width * 0.035);
+                const subFontSize = Math.round(canvas.width * 0.021);
 
-                if (eventTitle.value.trim() !== '' && eventSub.value.trim() !== '') {
-                    ctx.font = `bold ${Math.round(canvas.width * 0.035)}px 'Plus Jakarta Sans', sans-serif`;
-                    ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === 'transparent') ? '#0f172a' : '#ffffff';
-                    ctx.fillText(eventTitle.value.toUpperCase(), canvas.width / 2, footerCenterY - 12);
-
-                    ctx.font = `${Math.round(canvas.width * 0.022)}px 'Plus Jakarta Sans', sans-serif`;
-                    ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === 'transparent') ? '#475569' : '#cbd5e1';
-                    ctx.fillText(eventSub.value, canvas.width / 2, footerCenterY + 16);
-                } else {
-                    const text = (eventTitle.value || eventSub.value).toUpperCase();
-                    ctx.font = `bold ${Math.round(canvas.width * 0.038)}px 'Plus Jakarta Sans', sans-serif`;
-                    ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === 'transparent') ? '#0f172a' : '#ffffff';
-                    ctx.fillText(text, canvas.width / 2, footerCenterY);
+                if (eventTitle.value.trim() !== '') {
+                    ctx.font = `bold ${titleFontSize}px Plus Jakarta Sans`;
+                    ctx.fillText(eventTitle.value.toUpperCase(), canvas.width / 2, footerY - Math.round(titleFontSize * 0.2));
                 }
-                ctx.restore();
+                if (eventSub.value.trim() !== '') {
+                    ctx.font = `500 ${subFontSize}px Plus Jakarta Sans`;
+                    ctx.fillText(eventSub.value, canvas.width / 2, footerY + Math.round(subFontSize * 1.2));
+                }
+            }
+
+            if (!isPassActive()) {
+                drawWatermark(ctx, canvas.width, canvas.height);
+            }
+
+            if (!isBatch) {
+                resultModal.classList.add('active');
+                generateOnlineQRCode();
             }
         }
 
-        function drawCroppedImage(ctx, img, x, y, targetW, targetH) {
+        function drawWatermark(ctx, width, height) {
             ctx.save();
-            if (filterSelect && filterSelect.value !== 'none') {
-                ctx.filter = filterSelect.value;
+            ctx.rotate(-Math.PI / 6);
+            ctx.font = `bold ${Math.round(width * 0.045)}px Plus Jakarta Sans`;
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+            ctx.textAlign = 'center';
+            
+            const stepX = Math.round(width * 0.4);
+            const stepY = Math.round(height * 0.2);
+            for (let y = -height; y < height * 2; y += stepY) {
+                for (let x = -width; x < width * 2; x += stepX) {
+                    ctx.fillText('www.edueasy.id', x, y);
+                }
             }
-
-            const imgRatio = img.width / img.height;
-            const targetRatio = targetW / targetH;
-            let sx, sy, sw, sh;
-
-            if (imgRatio > targetRatio) {
-                sh = img.height;
-                sw = sh * targetRatio;
-                sx = (img.width - sw) / 2;
-                sy = 0;
-            } else {
-                sw = img.width;
-                sh = sw / targetRatio;
-                sx = 0;
-                sy = (img.height - sh) / 2;
-            }
-
-            ctx.drawImage(img, sx, sy, sw, sh, x, y, targetW, targetH);
             ctx.restore();
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.fillRect(0, height - 50, width, 50);
+            ctx.font = '700 15px Plus Jakarta Sans';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText('DEMO MODE — BUY PASS TO REMOVE WATERMARK: WWW.EDUEASY.ID', width / 2, height - 20);
         }
 
-        async function processFinalOutput() {
-            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
-            outputCanvas.width = config.w;
-            outputCanvas.height = config.h;
-            const ctx = outputCanvas.getContext('2d');
+        function drawCroppedImage(ctx, img, x, y, w, h) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
-            const loadedImages = await Promise.all(capturedPhotos.map(src => {
-                return new Promise(res => {
-                    const img = new Image();
-                    img.onload = () => res(img);
-                    img.src = src;
-                });
-            }));
-
-            drawLayout(ctx, outputCanvas, loadedImages, config.isPortrait);
-
-            // Ganti CSS Print secara dinamis
-            const dynamicPrintStyle = document.getElementById('dynamicPrintStyle');
-            if (dynamicPrintStyle) {
-                dynamicPrintStyle.textContent = `@page { size: ${config.printSize}; margin: 0; }`;
+            const imgAspect = img.width / img.height, targetAspect = w / h;
+            let sx, sy, sw, sh;
+            if (imgAspect > targetAspect) {
+                sh = img.height; sw = img.height * targetAspect; sx = (img.width - sw) / 2; sy = 0;
+            } else {
+                sw = img.width; sh = img.width / targetAspect; sx = 0; sy = (img.height - sh) / 2;
             }
-
-            resultModal.classList.add('active');
-            uploadToGoogleDriveAsync();
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
-        async function uploadToGoogleDriveAsync() {
-            const masterFolderId = extractFolderId(localStorage.getItem('cfg_drive_link') || "");
-            const eventName = localStorage.getItem('cfg_event_name') || eventTitle.value || "Photobooth Event";
+        // PENYESUAIAN PENGUNCIAN UNGGAH PADA GENERATEONLINEQRCODE
+        async function generateOnlineQRCode() {
+            const rawDriveLink = localStorage.getItem('cfg_drive_link') || "";
+            const activeFolderId = extractFolderId(rawDriveLink);
+            const activeEventName = localStorage.getItem('cfg_event_name') || eventTitle.value || "Photobooth Event";
 
-            if (!masterFolderId) {
-                qrStatus.textContent = "DRIVE NOT CONFIGURED";
+            if (!activeFolderId) {
+                qrcodeContainer.innerHTML = '<span style="color:#ef4444; font-size:11px; font-weight:bold;">⚠️ Link/ID Drive Belum Diisi!</span>';
+                qrStatus.textContent = "DRIVE FOLDER BELUM SET";
                 return;
             }
 
-            qrStatus.textContent = "UPLOADING TO DRIVE...";
+            const folderUrl = `https://drive.google.com/drive/folders/${activeFolderId}`;
+
             qrcodeContainer.innerHTML = '';
+            let qrRendered = false;
+
+            if (typeof QRCode !== 'undefined') {
+                try {
+                    new QRCode(qrcodeContainer, { 
+                        text: folderUrl, 
+                        width: 120, 
+                        height: 120, 
+                        correctLevel: QRCode.CorrectLevel.L 
+                    });
+                    qrRendered = true;
+                } catch (e) {
+                    console.warn("QRCode JS Render Warning, switching to Image API Fallback:", e);
+                }
+            }
+
+            if (!qrRendered) {
+                const qrImg = document.createElement('img');
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(folderUrl)}`;
+                qrImg.style.width = '120px';
+                qrImg.style.height = '120px';
+                qrImg.style.borderRadius = '4px';
+                qrImg.alt = 'QR Code Drive';
+                qrcodeContainer.appendChild(qrImg);
+            }
+
+            if (isUploadingDrive) return;
+            isUploadingDrive = true;
+
+            qrStatus.textContent = "🔄 MENGUNGGAH KE DRIVE...";
 
             const webCanvas = document.createElement('canvas');
             const targetW = 1600;
             const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
-            webCanvas.width = targetW;
+            webCanvas.width = targetW; 
             webCanvas.height = targetH;
+            
             const webCtx = webCanvas.getContext('2d');
             webCtx.fillStyle = '#ffffff';
             webCtx.fillRect(0, 0, targetW, targetH);
             webCtx.imageSmoothingEnabled = true;
             webCtx.imageSmoothingQuality = 'high';
             webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
-
-            const jpegData = webCanvas.toDataURL('image/jpeg', 0.85);
-
-            if (!navigator.onLine) {
-                await addToQueue({ image: jpegData, masterFolderId, eventName });
-                qrStatus.textContent = "OFFLINE - SAVED TO QUEUE";
-                return;
-            }
+            
+            const base64Image = webCanvas.toDataURL('image/jpeg', 0.85);
 
             try {
+                if (!navigator.onLine) {
+                    await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
+                    qrStatus.textContent = "📦 OFFLINE (TERSIMPAN DI QUEUE)";
+                    return;
+                }
+
                 const res = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ image: jpegData, masterFolderId, eventName })
+                    body: JSON.stringify({
+                        image: base64Image,
+                        masterFolderId: activeFolderId,
+                        eventName: activeEventName
+                    })
                 });
-                const data = await res.json();
 
-                if (data.status === 'success' && data.fileUrl) {
-                    qrStatus.textContent = "SCAN QR FOR DIGITAL COPY:";
-                    new QRCode(qrcodeContainer, {
-                        text: data.fileUrl,
-                        width: 140,
-                        height: 140
-                    });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    qrStatus.textContent = "✅ FOTO TERKIRIM KE DRIVE";
                 } else {
-                    throw new Error(data.message || "Upload failed");
+                    throw new Error(data.message || "Gagal mengunggah");
                 }
             } catch (err) {
-                console.warn("Direct upload error, queuing file:", err);
-                await addToQueue({ image: jpegData, masterFolderId, eventName });
-                qrStatus.textContent = "QUEUED FOR AUTO-SYNC";
-            }
-        }
-
-        if (startBtn) {
-            startBtn.addEventListener('click', async () => {
-                capturedPhotos = [];
-                startBtn.style.display = 'none';
-                const totalPoses = parseInt(poseFormat.value);
-
-                for (let i = 0; i < totalPoses; i++) {
-                    if (countdownDuration > 0) {
-                        await runCountdown(countdownDuration);
-                    }
-                    triggerFlash();
-                    captureFrame();
-                    if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1500));
+                console.error("Upload Drive Error:", err);
+                try {
+                    await addToQueue({ image: base64Image, masterFolderId: activeFolderId, eventName: activeEventName });
+                    qrStatus.textContent = "📦 TERSIMPAN DI QUEUE (AKAN DIPROSES)";
+                } catch (e) {
+                    qrStatus.textContent = "❌ GAGAL UPLOAD";
                 }
-
-                startBtn.style.display = 'inline-flex';
-                await processFinalOutput();
-            });
-        }
-
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', () => {
-                resultModal.classList.remove('active');
-                qrcodeContainer.innerHTML = '';
-                capturedPhotos = [];
-            });
+            } finally {
+                isUploadingDrive = false;
+            }
         }
 
         if (printBtn) {
             printBtn.addEventListener('click', () => {
                 const printArea = document.getElementById('printArea');
+                const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+                document.getElementById('dynamicPrintStyle').innerHTML = `@page { size: ${config.printSize}; margin: 0; }`;
                 printArea.innerHTML = '';
-                const img = document.createElement('img');
+                const img = new Image();
+                img.onload = () => { printArea.appendChild(img); setTimeout(() => window.print(), 300); };
                 img.src = outputCanvas.toDataURL('image/png');
-                printArea.appendChild(img);
-                window.print();
             });
         }
 
         if (downloadPngBtn) {
             downloadPngBtn.addEventListener('click', () => {
                 const link = document.createElement('a');
-                link.download = `photobooth_${Date.now()}.png`;
+                link.download = `photobooth-${Date.now()}.png`;
                 link.href = outputCanvas.toDataURL('image/png');
                 link.click();
             });
         }
 
         if (downloadZipBtn) {
-            downloadZipBtn.addEventListener('click', async () => {
+            downloadZipBtn.addEventListener('click', () => {
                 const zip = new JSZip();
-                const folder = zip.folder("photobooth_raw_photos");
-
-                capturedPhotos.forEach((src, idx) => {
-                    const base64Data = src.split(',')[1];
-                    folder.file(`photo_${idx + 1}.png`, base64Data, { base64: true });
-                });
-
-                const finalData = outputCanvas.toDataURL('image/png').split(',')[1];
-                folder.file(`final_strip.png`, finalData, { base64: true });
-
-                const blob = await zip.generateAsync({ type: "blob" });
-                saveAs(blob, `photobooth_session_${Date.now()}.zip`);
+                const folder = zip.folder("photobooth_session");
+                folder.file("photostrip_full.png", outputCanvas.toDataURL('image/png').split(',')[1], { base64: true });
+                capturedPhotos.forEach((photo, idx) => folder.file(`pose_${idx + 1}.png`, photo.split(',')[1], { base64: true }));
+                zip.generateAsync({ type: "blob" }).then((blob) => saveAs(blob, `photobooth-session-${Date.now()}.zip`));
             });
         }
 
-        // INITIALIZATION
+        if (closeModalBtn) closeModalBtn.addEventListener('click', () => { capturedPhotos = []; resultModal.classList.remove('active'); });
+
         window.addEventListener('online', processOfflineQueue);
-        window.addEventListener('DOMContentLoaded', () => {
-            initDB();
+        setInterval(processOfflineQueue, 15000);
+
+        window.addEventListener('load', () => {
             initCameras();
+            initDB();
             initKioskLockdown();
-            updateLicenseStatusUI();
         });
     </script>
 </body>
