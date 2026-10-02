@@ -3,108 +3,774 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="23.0">
-    <title>Aplikasi Web - Versi 23</title>
+    <title>Photobooth Kiosk System - Versi 23</title>
     <style>
         :root {
-            --bg-color: #0f172a;
+            --bg-main: #0f172a;
             --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #38bdf8;
-            --border-color: #334155;
+            --card-inner: #0f172a;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .version-badge {
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid var(--accent);
+        }
+
+        .btn-admin {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-admin:hover {
+            background: var(--border);
+        }
+
+        /* Main Screen Views */
+        main {
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             padding: 20px;
         }
 
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-            max-width: 500px;
+        .view-page {
+            display: none;
             width: 100%;
+            max-width: 550px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             text-align: center;
         }
 
-        .version-tag {
-            display: inline-block;
-            background-color: rgba(56, 189, 248, 0.15);
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin-bottom: 1.25rem;
+        .view-page.active {
+            display: block;
         }
 
-        h1 {
-            font-size: 1.75rem;
-            margin-bottom: 0.75rem;
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
         }
 
-        p {
-            color: #94a3b8;
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
             margin-bottom: 1.5rem;
-            line-height: 1.6;
+        }
+
+        /* QRIS & Payment Section */
+        .qris-box {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            display: inline-block;
+            margin: 1rem 0;
+        }
+
+        .qris-box img {
+            width: 180px;
+            height: 180px;
+        }
+
+        .price-tag {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 0.5rem 0;
+        }
+
+        .price-original {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-right: 8px;
+        }
+
+        /* Action Buttons */
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent);
+            color: #0f172a;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 480px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Passcode Keypad Styling */
+        .passcode-display {
+            background: var(--card-inner);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            font-weight: bold;
+            min-height: 50px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .keypad-btn {
+            background: var(--card-inner);
+            border: 1px solid var(--border);
+            color: var(--text-light);
+            padding: 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .keypad-btn:active {
+            background: var(--accent);
+            color: #000;
+        }
+
+        /* Feedback Display */
+        .feedback-box {
+            min-height: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+        }
+
+        .feedback-success { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .feedback-error { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .feedback-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+
+        /* Admin Form Styling */
+        .admin-modal {
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background: var(--card-inner);
+            border: 1px solid var(--border);
+            color: var(--text-light);
+            border-radius: 8px;
             font-size: 0.95rem;
         }
 
-        .btn {
-            background-color: var(--accent-color);
-            color: #0f172a;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 8px;
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .btn-preset {
+            background: var(--card-inner);
+            border: 1px solid var(--border);
+            color: var(--text-light);
+            padding: 8px;
+            font-size: 0.8rem;
+            border-radius: 6px;
             cursor: pointer;
-            transition: transform 0.1s ease, opacity 0.2s ease;
         }
 
-        .btn:hover {
-            opacity: 0.9;
+        .btn-preset.active {
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--accent);
         }
 
-        .btn:active {
-            transform: scale(0.98);
+        .table-container {
+            margin-top: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow-x: auto;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background: var(--card-inner); color: var(--text-muted); }
+        
+        .badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .badge-expired { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
     </style>
 </head>
 <body>
 
-    <main class="card">
-        <span class="version-tag">Versi 23.0</span>
-        <h1>Pembaruan Berhasil</h1>
-        <p>Struktur HTML baru versi 23 telah dimuat. Silakan sesuaikan komponen atau logika khusus yang ingin ditambahkan.</p>
-        <button class="btn" id="mainAction">Jalankan Sistem v23</button>
+    <!-- Header Navigation -->
+    <header>
+        <div class="brand">
+            📸 PHOTOBOOTH KIOSK
+            <span class="version-badge">v23.0</span>
+        </div>
+        <button class="btn-admin" onclick="openAdminModal()">⚙️ Event Settings / Admin</button>
+    </header>
+
+    <main>
+        <!-- HALAMAN 5: PEMBAYARAN & PASS CODE -->
+        <section id="page5" class="view-page active">
+            <h2>Halaman 5: Pembayaran</h2>
+            <p class="subtitle">Pilih metode pembayaran atau pakai Kode Voucher khusus</p>
+
+            <div class="qris-box">
+                <!-- Placeholder QRIS -->
+                <svg width="180" height="180" viewBox="0 0 100 100">
+                    <rect width="100" height="100" fill="#ffffff"/>
+                    <path d="M10 10 h30 v30 h-30 z M15 15 v20 h20 v-20 z M20 20 h10 v10 h-10 z" fill="#000"/>
+                    <path d="M60 10 h30 v30 h-30 z M65 15 v20 h20 v-20 z M70 20 h10 v10 h-10 z" fill="#000"/>
+                    <path d="M10 60 h30 v30 h-30 z M15 65 v20 h20 v-20 z M20 70 h10 v10 h-10 z" fill="#000"/>
+                    <rect x="45" y="45" width="10" height="10" fill="#000"/>
+                    <rect x="60" y="60" width="15" height="15" fill="#000"/>
+                    <rect x="80" y="75" width="10" height="15" fill="#000"/>
+                </svg>
+            </div>
+
+            <div id="priceContainer">
+                <div class="price-tag">Rp <span id="displayPrice">50.000</span></div>
+            </div>
+
+            <button class="btn-primary" onclick="simulateQrisPayment()">Bayar via QRIS Midtrans</button>
+            <button class="btn-secondary" onclick="openCustomerKeypad()">🎟️ Punya Pass Code / Voucher?</button>
+        </section>
+
+        <!-- HALAMAN 6: CETAK & DOWNLOAD -->
+        <section id="page6" class="view-page">
+            <h2 style="color: var(--success);">🎉 Pembayaran & Akses Berhasil!</h2>
+            <p class="subtitle">Foto Anda sedang diproses untuk dicetak.</p>
+            
+            <div style="margin: 2rem 0; padding: 1.5rem; background: var(--card-inner); border-radius: 12px; border: 1px dashed var(--accent);">
+                <p style="margin-bottom: 10px; font-weight: bold;">Status Cetak & Unduhan:</p>
+                <p>✅ Cetak Foto Bersih (Tanpa Watermark)</p>
+                <p>✅ File Digital (HD Quality) Siap Diunduh</p>
+            </div>
+
+            <button class="btn-primary" onclick="resetToPage5()">Selesai / Kembali ke Awal</button>
+        </section>
     </main>
 
+    <!-- POP-UP KEYPAD MODAL (CUSTOMER) -->
+    <div id="customerKeypadModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeCustomerKeypad()">&times;</button>
+            <h2>Masukkan Pass Code</h2>
+            <p class="subtitle">Gunakan soft-keyboard di bawah untuk mengetik kode</p>
+
+            <div id="keypadDisplay" class="passcode-display">______</div>
+            
+            <div id="feedbackDisplay" class="feedback-box"></div>
+
+            <!-- Soft Keypad -->
+            <div class="keypad-grid">
+                <button class="keypad-btn" onclick="keypadInput('1')">1</button>
+                <button class="keypad-btn" onclick="keypadInput('2')">2</button>
+                <button class="keypad-btn" onclick="keypadInput('3')">3</button>
+                <button class="keypad-btn" onclick="keypadInput('4')">4</button>
+                <button class="keypad-btn" onclick="keypadInput('5')">5</button>
+                <button class="keypad-btn" onclick="keypadInput('6')">6</button>
+                <button class="keypad-btn" onclick="keypadInput('7')">7</button>
+                <button class="keypad-btn" onclick="keypadInput('8')">8</button>
+                <button class="keypad-btn" onclick="keypadInput('9')">9</button>
+                <button class="keypad-btn" style="color: var(--warning);" onclick="keypadBackspace()">⌫</button>
+                <button class="keypad-btn" onclick="keypadInput('0')">0</button>
+                <button class="keypad-btn" style="color: var(--danger);" onclick="keypadClear()">C</button>
+            </div>
+
+            <!-- Quick Alphabet Toggle for Promo Code (Custom / Preset) -->
+            <div style="display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">
+                <button class="btn-preset" onclick="keypadInput('PROMO30')">PROMO30</button>
+                <button class="btn-preset" onclick="keypadInput('HAPPYHOUR')">HAPPYHOUR</button>
+                <button class="btn-preset" onclick="keypadInput('FREE100')">FREE100</button>
+            </div>
+
+            <button class="btn-primary" onclick="validateCustomerPasscode()">Gunakan Kode</button>
+        </div>
+    </div>
+
+    <!-- MODAL ADMIN / EVENT SETTINGS -->
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal-content admin-modal">
+            <button class="modal-close" onclick="closeAdminModal()">&times;</button>
+            <h2>Pass Code Generator (Admin)</h2>
+            <p class="subtitle">Buat dan kelola kode promo berdurasi & kuota</p>
+
+            <!-- Form Pembuat Kode -->
+            <div class="form-group">
+                <label>Nama Kode Pass</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="adminCodeInput" class="form-control" placeholder="Contoh: PROMO30" style="text-transform: uppercase;">
+                    <button class="btn-secondary" style="width: auto; white-space: nowrap; margin: 0;" onclick="generateRandomCode()">Random</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Pengaturan Durasi (Timer)</label>
+                <div class="preset-grid">
+                    <button class="btn-preset active" onclick="selectDurationPreset(15, this)">15 Mnt</button>
+                    <button class="btn-preset" onclick="selectDurationPreset(30, this)">30 Mnt</button>
+                    <button class="btn-preset" onclick="selectDurationPreset(60, this)">1 Jam</button>
+                    <button class="btn-preset" onclick="selectDurationPreset('TODAY', this)">Hari Ini</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Batas Pemakaian (Usage Limit)</label>
+                <select id="adminUsageType" class="form-control">
+                    <option value="SINGLE">Single Use (1x pakai)</option>
+                    <option value="MULTI">Multi Use / Unlimited Kuota</option>
+                    <option value="CUSTOM">Custom Quota (cth: 10x)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="customQuotaGroup" style="display: none;">
+                <label>Jumlah Kuota Maksimal</label>
+                <input type="number" id="adminCustomQuota" class="form-control" value="10" min="1">
+            </div>
+
+            <div class="form-group">
+                <label>Tipe Diskon</label>
+                <select id="adminDiscountType" class="form-control">
+                    <option value="FREE">100% Free (Bypass Pembayaran)</option>
+                    <option value="POTONGAN_50">Potongan Harga 50%</option>
+                    <option value="POTONGAN_10K">Potongan Rp 10.000</option>
+                </select>
+            </div>
+
+            <button class="btn-primary" onclick="createPasscode()">+ Buat Kode Pass Baru</button>
+
+            <!-- Daftar Kode Aktif -->
+            <h3 style="margin-top: 2rem; font-size: 1.1rem;">Daftar Pass Code Tersimpan</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Tipe</th>
+                            <th>Sisa Waktu</th>
+                            <th>Kuota</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="passcodeTableBody">
+                        <!-- Iterasi Kode Pass oleh JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIKA SISTEM (JS) -->
     <script>
-        // Logika Versi 23
-        document.addEventListener('DOMContentLoaded', () => {
-            const button = document.getElementById('mainAction');
-            button.addEventListener('click', () => {
-                console.log('Sistem versi 23 beroperasi normal.');
-                alert('Versi 23 aktif dan berjalan lancar!');
-            });
+        // Data Store & App State
+        const INITIAL_PRICE = 50000;
+        let currentPrice = INITIAL_PRICE;
+        let passcodes = JSON.parse(localStorage.getItem('photobooth_passcodes')) || [
+            {
+                code: 'PROMO30',
+                discountType: 'FREE',
+                expireTime: Date.now() + 30 * 60 * 1000, // 30 mins from now
+                usageType: 'SINGLE',
+                maxQuota: 1,
+                usedCount: 0
+            }
+        ];
+
+        let currentInput = "";
+        let selectedDurationMinutes = 15;
+
+        // Save & Sync LocalStorage
+        function savePasscodes() {
+            localStorage.setItem('photobooth_passcodes', JSON.stringify(passcodes));
+            renderPasscodeTable();
+        }
+
+        // --- KEYPAD & CUSTOMER LOGIC ---
+        function openCustomerKeypad() {
+            currentInput = "";
+            updateKeypadDisplay();
+            clearFeedback();
+            document.getElementById('customerKeypadModal').classList.add('active');
+        }
+
+        function closeCustomerKeypad() {
+            document.getElementById('customerKeypadModal').classList.remove('active');
+        }
+
+        function keypadInput(val) {
+            if (currentInput.length < 12) {
+                currentInput += val;
+                updateKeypadDisplay();
+            }
+        }
+
+        function keypadBackspace() {
+            currentInput = currentInput.slice(0, -1);
+            updateKeypadDisplay();
+        }
+
+        function keypadClear() {
+            currentInput = "";
+            updateKeypadDisplay();
+        }
+
+        function updateKeypadDisplay() {
+            const display = document.getElementById('keypadDisplay');
+            display.innerText = currentInput || "______";
+        }
+
+        function clearFeedback() {
+            const fb = document.getElementById('feedbackDisplay');
+            fb.className = 'feedback-box';
+            fb.innerText = '';
+        }
+
+        function showFeedback(text, type) {
+            const fb = document.getElementById('feedbackDisplay');
+            fb.className = `feedback-box feedback-${type}`;
+            fb.innerText = text;
+        }
+
+        // Algoritma Validasi Passcode Real-time
+        function validateCustomerPasscode() {
+            const codeInput = currentInput.trim().toUpperCase();
+            
+            if (!codeInput) {
+                showFeedback("Masukkan kode terlebih dahulu!", "warning");
+                return;
+            }
+
+            const now = Date.now();
+            const itemIndex = passcodes.findIndex(p => p.code.toUpperCase() === codeInput);
+
+            if (itemIndex === -1) {
+                // ❌ TIDAK DITEMUKAN
+                showFeedback("❌ Kode Tidak Ditemukan atau Kuota Penggunaan Sudah Habis", "error");
+                return;
+            }
+
+            const passcode = passcodes[itemIndex];
+
+            // Cek Kriteria 1: Masa Berlaku Waktu
+            if (now > passcode.expireTime) {
+                // ❌ KADALUARSA
+                showFeedback("❌ Kode Promo Sudah Hangus / Kadaluarsa (Batas Waktu Habis)", "error");
+                return;
+            }
+
+            // Cek Kriteria 2: Sisa Kuota Pemakaian
+            if (passcode.usageType !== 'MULTI' && passcode.usedCount >= passcode.maxQuota) {
+                // ❌ HABIS
+                showFeedback("❌ Kode Tidak Ditemukan atau Kuota Penggunaan Sudah Habis", "error");
+                return;
+            }
+
+            // ✅ BERHASIL (Memenuhi Semua Kriteria)
+            passcode.usedCount += 1;
+            savePasscodes();
+
+            showFeedback("✅ Pass Code Valid! Akses Gratis Berhasil", "success");
+
+            setTimeout(() => {
+                closeCustomerKeypad();
+                applyDiscount(passcode.discountType);
+            }, 1200);
+        }
+
+        function applyDiscount(discountType) {
+            if (discountType === 'FREE') {
+                // Bypass Pembayaran langsung ke Halaman 6
+                goToPage('page6');
+            } else if (discountType === 'POTONGAN_50') {
+                currentPrice = INITIAL_PRICE * 0.5;
+                document.getElementById('displayPrice').innerHTML = `<span class="price-original">Rp ${INITIAL_PRICE.toLocaleString('id-ID')}</span> Rp ${currentPrice.toLocaleString('id-ID')}`;
+                alert('Diskon 50% Berhasil Diterapkan!');
+            } else if (discountType === 'POTONGAN_10K') {
+                currentPrice = Math.max(0, INITIAL_PRICE - 10000);
+                document.getElementById('displayPrice').innerHTML = `<span class="price-original">Rp ${INITIAL_PRICE.toLocaleString('id-ID')}</span> Rp ${currentPrice.toLocaleString('id-ID')}`;
+                alert('Potongan Rp 10.000 Berhasil Diterapkan!');
+            }
+        }
+
+        function simulateQrisPayment() {
+            alert('Pembayaran Berhasil via QRIS Midtrans!');
+            goToPage('page6');
+        }
+
+        function goToPage(pageId) {
+            document.querySelectorAll('.view-page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function resetToPage5() {
+            currentPrice = INITIAL_PRICE;
+            document.getElementById('displayPrice').innerText = INITIAL_PRICE.toLocaleString('id-ID');
+            goToPage('page5');
+        }
+
+        // --- ADMIN / GENERATOR LOGIC ---
+        function openAdminModal() {
+            renderPasscodeTable();
+            document.getElementById('adminModal').classList.add('active');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+        }
+
+        function generateRandomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('adminCodeInput').value = result;
+        }
+
+        function selectDurationPreset(minutes, btn) {
+            document.querySelectorAll('.preset-grid .btn-preset').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedDurationMinutes = minutes;
+        }
+
+        document.getElementById('adminUsageType').addEventListener('change', function() {
+            const customGroup = document.getElementById('customQuotaGroup');
+            customGroup.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
         });
+
+        function createPasscode() {
+            const codeInput = document.getElementById('adminCodeInput').value.trim().toUpperCase();
+            if (!codeInput) {
+                alert('Masukkan nama kode terlebih dahulu!');
+                return;
+            }
+
+            // Hitung Waktu Expire
+            let expireTime = Date.now();
+            if (selectedDurationMinutes === 'TODAY') {
+                const endOfDay = new Date();
+                endOfDay.setHours(23, 59, 59, 999);
+                expireTime = endOfDay.getTime();
+            } else {
+                expireTime += selectedDurationMinutes * 60 * 1000;
+            }
+
+            const usageType = document.getElementById('adminUsageType').value;
+            let maxQuota = 1;
+            if (usageType === 'MULTI') maxQuota = Infinity;
+            if (usageType === 'CUSTOM') maxQuota = parseInt(document.getElementById('adminCustomQuota').value) || 10;
+
+            const newPasscode = {
+                code: codeInput,
+                discountType: document.getElementById('adminDiscountType').value,
+                expireTime: expireTime,
+                usageType: usageType,
+                maxQuota: maxQuota,
+                usedCount: 0
+            };
+
+            passcodes.push(newPasscode);
+            savePasscodes();
+            document.getElementById('adminCodeInput').value = '';
+            alert(`Passcode ${codeInput} berhasil dibuat!`);
+        }
+
+        function deletePasscode(index) {
+            passcodes.splice(index, 1);
+            savePasscodes();
+        }
+
+        function renderPasscodeTable() {
+            const tbody = document.getElementById('passcodeTableBody');
+            tbody.innerHTML = '';
+
+            const now = Date.now();
+
+            passcodes.forEach((p, index) => {
+                const isExpired = now > p.expireTime;
+                const remainingMs = Math.max(0, p.expireTime - now);
+                const remainingMins = Math.floor(remainingMs / 60000);
+                const remainingSecs = Math.floor((remainingMs % 60000) / 1000);
+
+                const timeDisplay = isExpired 
+                    ? `<span class="badge badge-expired">Kadaluarsa</span>` 
+                    : `${remainingMins}m ${remainingSecs}s`;
+
+                const quotaDisplay = p.usageType === 'MULTI' ? '∞ Unlimited' : `${p.usedCount}/${p.maxQuota}`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.code}</strong></td>
+                    <td>${p.discountType}</td>
+                    <td>${timeDisplay}</td>
+                    <td>${quotaDisplay}</td>
+                    <td><button style="color:var(--danger); background:none; border:none; cursor:pointer;" onclick="deletePasscode(${index})">Hapus</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Live Timer Refresh Table
+        setInterval(() => {
+            if (document.getElementById('adminModal').classList.contains('active')) {
+                renderPasscodeTable();
+            }
+        }, 1000);
+
+        // Initial Render
+        renderPasscodeTable();
     </script>
 </body>
 </html>
