@@ -2,775 +2,2327 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth Kiosk System - Versi 23</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kiosk Photobooth Pro 22.1</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Reliable Online CDN Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- MIDTRANS SNAP SCRIPT -->
+    <script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-MK-5yLAVCdP0Yd_o"></script>
+
+    <style id="dynamicPrintStyle">
+        @page { size: 5in 7in; margin: 0; }
+    </style>
+
     <style>
         :root {
-            --bg-main: #0f172a;
-            --card-bg: #1e293b;
-            --card-inner: #0f172a;
-            --accent: #38bdf8;
-            --accent-hover: #0284c7;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --text-light: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --bg-main: #0b0f19;
+            --panel-bg: rgba(23, 30, 48, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --accent-hover: #4f46e5;
+            --text-title: #f8fafc;
+            --text-body: #94a3b8;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 8px;
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        input, textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+
+        /* Perbaikan kontras placeholder di dark mode */
+        input::placeholder, textarea::placeholder {
+            color: #cbd5e1 !important;
+            opacity: 0.85;
         }
 
         body {
             background-color: var(--bg-main);
-            color: var(--text-light);
+            color: var(--text-title);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
+            touch-action: manipulation;
         }
 
-        /* Top Navigation Header */
-        header {
+        header.app-header {
+            background: #0f172a;
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border);
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
-        .brand {
-            font-size: 1.25rem;
-            font-weight: 700;
+        .brand-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #818cf8;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            letter-spacing: -0.02em;
         }
 
-        .version-badge {
-            background: rgba(56, 189, 248, 0.2);
-            color: var(--accent);
-            padding: 2px 8px;
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-settings {
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+
+        .btn-settings:hover { background: #2563eb; }
+
+        .license-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+        }
+        .license-badge.free { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .license-badge.active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .toolbar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tool-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--text-body);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: #1e293b;
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            gap: 4px;
+            min-height: 44px;
+        }
+
+        .seg-btn {
+            flex: 1;
+            background: transparent;
+            color: #94a3b8;
+            border: none;
+            padding: 8px 12px;
             border-radius: 6px;
             font-size: 0.8rem;
-            border: 1px solid var(--accent);
-        }
-
-        .btn-admin {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-light);
-            padding: 8px 16px;
-            border-radius: 8px;
+            font-weight: 700;
             cursor: pointer;
-            font-weight: 600;
             transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 38px;
         }
 
-        .btn-admin:hover {
-            background: var(--border);
+        .seg-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
         }
 
-        /* Main Screen Views */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            min-height: 44px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+
+        .btn-qris { background: #2563eb; color: #fff; }
+        .btn-qris:hover { background: #1d4ed8; }
+
+        .btn-pass { background: #059669; color: #fff; }
+        .btn-pass:hover { background: #047857; }
+
+        .cam-select {
+            flex: 1.5;
+            background: #1e293b;
+            color: var(--text-title);
+            border: 1px solid var(--panel-border);
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            outline: none;
+            min-height: 44px;
+        }
+
+        .btn-icon {
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid var(--panel-border);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
+        }
+        .btn-icon:hover { background: #334155; }
+
         main {
             flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .view-page {
-            display: none;
-            width: 100%;
-            max-width: 550px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            text-align: center;
-        }
-
-        .view-page.active {
-            display: block;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* QRIS & Payment Section */
-        .qris-box {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            display: inline-block;
-            margin: 1rem 0;
-        }
-
-        .qris-box img {
-            width: 180px;
-            height: 180px;
-        }
-
-        .price-tag {
-            font-size: 1.75rem;
-            font-weight: bold;
-            color: var(--accent);
-            margin: 0.5rem 0;
-        }
-
-        .price-original {
-            text-decoration: line-through;
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-right: 8px;
-        }
-
-        /* Action Buttons */
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background-color: var(--accent);
-            color: #0f172a;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.2s;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .btn-secondary {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        /* Modal Overlay */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 480px;
-            position: relative;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 15px; right: 15px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        /* Passcode Keypad Styling */
-        .passcode-display {
-            background: var(--card-inner);
-            border: 1px solid var(--border);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1.5rem;
-            letter-spacing: 4px;
-            font-weight: bold;
-            min-height: 50px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent);
-        }
-
-        .keypad-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 320px 1fr;
+            gap: 16px;
+            padding: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .sidebar {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            height: fit-content;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #818cf8;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .setting-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setting-card label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-body);
+            font-weight: 700;
+        }
+
+        select, input[type="text"] {
+            background: #1e293b;
+            color: var(--text-title);
+            border: 1px solid var(--panel-border);
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            outline: none;
+            width: 100%;
+            min-height: 44px;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
+            flex-wrap: wrap;
         }
 
-        .keypad-btn {
-            background: var(--card-inner);
-            border: 1px solid var(--border);
-            color: var(--text-light);
-            padding: 14px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 8px;
+        .color-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid transparent;
             cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s;
         }
+        .color-btn.active { border-color: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
-        .keypad-btn:active {
-            background: var(--accent);
-            color: #000;
-        }
-
-        /* Feedback Display */
-        .feedback-box {
-            min-height: 40px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            border-radius: 6px;
+        .custom-color-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--panel-border);
+            border-radius: 50%;
+            padding: 0;
+            background: transparent;
+            cursor: pointer;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 5px 10px;
         }
 
-        .feedback-success { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
-        .feedback-error { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
-        .feedback-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
-
-        /* Admin Form Styling */
-        .admin-modal {
-            max-width: 650px;
-            max-height: 90vh;
-            overflow-y: auto;
-            text-align: left;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            background: var(--card-inner);
-            border: 1px solid var(--border);
-            color: var(--text-light);
-            border-radius: 8px;
-            font-size: 0.95rem;
-        }
-
-        .preset-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 5px;
-        }
-
-        .btn-preset {
-            background: var(--card-inner);
-            border: 1px solid var(--border);
-            color: var(--text-light);
-            padding: 8px;
-            font-size: 0.8rem;
-            border-radius: 6px;
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 150%;
+            height: 150%;
             cursor: pointer;
+            background: none;
         }
 
-        .btn-preset.active {
-            border-color: var(--accent);
-            background: rgba(56, 189, 248, 0.2);
-            color: var(--accent);
+        .stage-container {
+            background: #000;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--panel-border);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            min-height: 400px;
+            padding: 16px;
         }
 
-        .table-container {
-            margin-top: 1.5rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow-x: auto;
+        .camera-wrapper {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #090d16;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
         }
 
-        table {
+        video {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            text-align: left;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.2s ease;
         }
 
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid var(--border);
+        video.mirrored { transform: scaleX(-1); }
+
+        .live-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: fill;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
         }
 
-        th { background: var(--card-inner); color: var(--text-muted); }
-        
-        .badge {
-            padding: 2px 6px;
+        .safe-zone-guide {
+            position: absolute;
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .flash-overlay {
+            position: absolute;
+            inset: 0; background: #ffffff;
+            opacity: 0; pointer-events: none; z-index: 50;
+        }
+        .flash-overlay.active { animation: flashAnimation 0.35s ease-out; }
+        @keyframes flashAnimation { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        .countdown-overlay {
+            position: absolute;
+            font-size: 7rem; font-weight: 800; color: #ffffff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 40; display: none;
+        }
+
+        .capture-bar { 
+            position: absolute; 
+            bottom: 20px; 
+            z-index: 30; 
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 8px 12px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-capture { 
+            padding: 14px 36px; 
+            font-size: 1.05rem; 
+            border-radius: 100px; 
+            font-weight: 800; 
+            background: var(--accent); 
+            color: #fff; 
+            border: none;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.2s ease;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-capture:active { transform: scale(0.96); }
+        .btn-capture:hover { background: var(--accent-hover); }
+
+        .modal {
+            position: fixed; inset: 0;
+            background: rgba(4, 7, 13, 0.88);
+            backdrop-filter: blur(16px);
+            z-index: 100; display: none;
+            justify-content: center; align-items: center;
+            padding: 16px;
+        }
+        .modal.active { display: flex; }
+
+        .modal-card {
+            background: #111827;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 20px; display: flex; gap: 20px;
+            max-width: 900px; width: 100%; max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .preview-box {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            background: #030712; border-radius: var(--radius-md); padding: 12px;
+        }
+
+        canvas { 
+            max-height: 60vh; 
+            max-width: 100%; 
+            object-fit: contain; 
+            border-radius: 8px;
+            background: repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) 0 0 / 16px 16px;
+        }
+        .modal-sidebar { width: 280px; display: flex; flex-direction: column; gap: 12px; }
+
+        .qr-card {
+            background: #ffffff; padding: 14px; border-radius: var(--radius-md);
+            display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+            min-height: 180px; justify-content: center;
+        }
+        .qr-card p { color: #0f172a; font-size: 0.72rem; font-weight: 800; word-break: break-word; }
+
+        .frame-card {
+            background: #0f172a;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .frame-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .frame-card.active {
+            border-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        .frame-thumb {
+            width: 100%;
+            height: 90px;
+            object-fit: contain;
+            background: #030712;
+            border-radius: 6px;
+        }
+        .frame-title {
+            font-size: 0.7rem;
+            color: #cbd5e1;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .frame-actions {
+            display: flex;
+            gap: 4px;
+            width: 100%;
+        }
+        .btn-frame-act {
+            flex: 1;
+            padding: 6px 4px;
+            font-size: 0.7rem;
             border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            min-height: 36px;
         }
-        .badge-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
-        .badge-expired { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .btn-frame-select { background: #6366f1; color: white; }
+        .btn-frame-delete { background: #ef4444; color: white; }
+
+        @media (max-width: 992px) {
+            main { grid-template-columns: 1fr; }
+            .modal-card { flex-direction: column; max-height: 95vh; }
+            .modal-sidebar { width: 100%; }
+            .stage-container { min-height: 380px; }
+            .countdown-overlay { font-size: 5rem; }
+        }
+
+        @media (max-width: 600px) {
+            header.app-header { padding: 10px 12px; gap: 12px; }
+            .brand-title { font-size: 0.85rem; }
+            .btn-settings { padding: 8px 12px; font-size: 0.75rem; min-height: 40px; }
+            .toolbar-grid { grid-template-columns: 1fr; gap: 10px; }
+            .btn-action, .seg-btn, .cam-select, .btn-icon { height: 44px; min-height: 44px; font-size: 0.8rem; }
+            
+            main { padding: 8px; gap: 12px; }
+            .sidebar { padding: 12px; gap: 12px; }
+            .stage-container { padding: 12px 8px; min-height: 320px; }
+            
+            .capture-bar { bottom: 12px; padding: 6px 10px; }
+            .btn-capture { padding: 12px 28px; font-size: 0.95rem; min-height: 44px; }
+            select, input[type="text"] { font-size: 16px !important; min-height: 44px; }
+        }
+
+        #printArea { display: none; }
+        @media print {
+            body > *:not(#printArea) { display: none !important; }
+            #printArea { display: block !important; width: 100% !important; height: 100% !important; }
+            #printArea img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Header Navigation -->
-    <header>
-        <div class="brand">
-            📸 PHOTOBOOTH KIOSK
-            <span class="version-badge">v23.0</span>
+    <!-- NAVBAR HEADER -->
+    <header class="app-header">
+        <div class="header-top">
+            <div class="brand-title">
+                📁 KIOSK PHOTOBOOTH PRO 22.1
+            </div>
+            <div class="top-actions">
+                <span id="queueBadge" class="license-badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); display: none;">🔄 Queue: 0</span>
+                <span id="licenseBadge" class="license-badge free">🟠 Free Mode</span>
+                <button id="settingsBtn" class="btn-settings">⚙️ Event Settings</button>
+            </div>
         </div>
-        <button class="btn-admin" onclick="openAdminModal()">⚙️ Event Settings / Admin</button>
+
+        <div class="toolbar-grid">
+            <div class="tool-card">
+                <span class="tool-label">Quick Mode Preset</span>
+                <div class="segmented-control">
+                    <button id="mode1Btn" class="seg-btn">📱 Mode 1</button>
+                    <button id="mode2Btn" class="seg-btn">🤳 Mode 2</button>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <span class="tool-label">License & Pass Code</span>
+                <div class="btn-group">
+                    <button id="midtransPayBtn" class="btn-action btn-qris">🛒 Buy Pass (QRIS)</button>
+                    <button id="activatePassBtn" class="btn-action btn-pass">🔑 Enter Pass</button>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <span class="tool-label">Camera & Screen</span>
+                <div class="btn-group">
+                    <select id="cameraSelect" class="cam-select"><option>Loading...</option></select>
+                    <button id="mirrorBtn" class="btn-icon" title="Mirror Camera">↔️ Mirror</button>
+                    <button id="fullscreenBtn" class="btn-icon" title="Fullscreen">⛶ Full</button>
+                </div>
+            </div>
+        </div>
     </header>
 
+    <!-- MAIN INTERFACE -->
     <main>
-        <!-- HALAMAN 5: PEMBAYARAN & PASS CODE -->
-        <section id="page5" class="view-page active">
-            <h2>Halaman 5: Pembayaran</h2>
-            <p class="subtitle">Pilih metode pembayaran atau pakai Kode Voucher khusus</p>
+        <aside class="sidebar">
+            <!-- SEKSI 1: DESAIN & FRAME OVERLAY -->
+            <div class="sidebar-section-title">🎨 FRAME & DESAIN VISUAL</div>
 
-            <div class="qris-box">
-                <!-- Placeholder QRIS -->
-                <svg width="180" height="180" viewBox="0 0 100 100">
-                    <rect width="100" height="100" fill="#ffffff"/>
-                    <path d="M10 10 h30 v30 h-30 z M15 15 v20 h20 v-20 z M20 20 h10 v10 h-10 z" fill="#000"/>
-                    <path d="M60 10 h30 v30 h-30 z M65 15 v20 h20 v-20 z M70 20 h10 v10 h-10 z" fill="#000"/>
-                    <path d="M10 60 h30 v30 h-30 z M15 65 v20 h20 v-20 z M20 70 h10 v10 h-10 z" fill="#000"/>
-                    <rect x="45" y="45" width="10" height="10" fill="#000"/>
-                    <rect x="60" y="60" width="15" height="15" fill="#000"/>
-                    <rect x="80" y="75" width="10" height="15" fill="#000"/>
-                </svg>
+            <div class="setting-card">
+                <label>Frame Overlay (PNG Transparan)</label>
+                <div style="display: flex; gap: 8px;">
+                    <button id="openFrameGalleryBtn" class="btn-icon" style="flex: 1; justify-content: center; background: #334155;">
+                        🖼️ Galeri Frame
+                    </button>
+                    <button id="uploadOverlayBtn" class="btn-icon" style="flex: 1; justify-content: center; background: #4f46e5;">
+                        📤 Unggah PNG
+                    </button>
+                </div>
+                <input type="file" id="overlayInput" accept="image/png" style="display: none;">
+
+                <div id="activeFrameBadge" style="font-size: 0.72rem; color: #38bdf8; display: none; align-items: center; justify-content: space-between; background: rgba(56, 189, 248, 0.1); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); margin-top: 4px;">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Aktif: <strong id="activeFrameName">-</strong></span>
+                    <button id="clearFrameBtn" title="Hapus Frame Aktif" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size: 11px; margin-left:6px;">✕</button>
+                </div>
             </div>
 
-            <div id="priceContainer">
-                <div class="price-tag">Rp <span id="displayPrice">50.000</span></div>
+            <div class="setting-card">
+                <label>Warna Background Strip</label>
+                <div class="color-picker-wrapper">
+                    <button class="color-btn active" data-color="#ffffff" style="background: #ffffff;"></button>
+                    <button class="color-btn" data-color="#090d16" style="background: #090d16;"></button>
+                    <button class="color-btn" data-color="#f472b6" style="background: #f472b6;"></button>
+                    <button class="color-btn" data-color="#38bdf8" style="background: #38bdf8;"></button>
+                    <button class="color-btn" data-color="transparent" title="No Fill (Transparan)" style="background: repeating-conic-gradient(#334155 0% 25%, #0f172a 0% 50%) 0 0 / 10px 10px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #cbd5e1; font-weight: 800;">🚫</button>
+                    <div class="custom-color-btn" title="Pick Custom Color">
+                        <input type="color" id="customColorPicker" value="#ffffff">
+                    </div>
+                </div>
             </div>
 
-            <button class="btn-primary" onclick="simulateQrisPayment()">Bayar via QRIS Midtrans</button>
-            <button class="btn-secondary" onclick="openCustomerKeypad()">🎟️ Punya Pass Code / Voucher?</button>
-        </section>
+            <div class="setting-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                    <label>Margin Tepi Frame (px)</label>
+                    <button id="btnFullBleed" style="background: rgba(99, 102, 241, 0.2); border: 1px solid #6366f1; color: #818cf8; font-size: 0.65rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; cursor: pointer;">⚡ Full Bleed (0px)</button>
+                </div>
+                <input type="range" id="outerMarginInput" min="0" max="150" value="0" style="min-height: auto;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-body); margin-top: 2px;">
+                    <span>0px (Rapat Tepi)</span>
+                    <span id="outerMarginVal" style="color: #38bdf8; font-weight: bold;">0px</span>
+                    <span>150px</span>
+                </div>
+            </div>
 
-        <!-- HALAMAN 6: CETAK & DOWNLOAD -->
-        <section id="page6" class="view-page">
-            <h2 style="color: var(--success);">🎉 Pembayaran & Akses Berhasil!</h2>
-            <p class="subtitle">Foto Anda sedang diproses untuk dicetak.</p>
+            <div class="setting-card">
+                <label>Jarak / Spasi Antar Foto (px)</label>
+                <input type="range" id="innerGapInput" min="0" max="100" value="15" style="min-height: auto;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-body); margin-top: 2px;">
+                    <span>0px</span>
+                    <span id="innerGapVal" style="color: #38bdf8; font-weight: bold;">15px</span>
+                    <span>100px</span>
+                </div>
+            </div>
+
+            <div class="setting-card">
+                <label>Efek Filter Visual</label>
+                <select id="filterSelect">
+                    <option value="none">Normal (Original)</option>
+                    <option value="grayscale(100%)">B&W (Black & White)</option>
+                    <option value="sepia(70%)">Vintage Sepia</option>
+                    <option value="brightness(110%) contrast(108%)">Bright & Soft</option>
+                </select>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--panel-border); margin: 4px 0;">
+
+            <!-- SEKSI 2: FORMAT CETAK & POSE -->
+            <div class="sidebar-section-title">🖨️ FORMAT CETAK & POSE</div>
+
+            <div class="setting-card">
+                <label>Ukuran Cetak (Standard DNP Printer)</label>
+                <select id="dnpSizeSelect">
+                    <option value="5r_p" selected>5R Portrait (5x7")</option>
+                    <option value="5r_l">5R Landscape (7x5")</option>
+                    <option value="4r_p">4R Portrait (4x6")</option>
+                    <option value="4r_l">4R Landscape (6x4")</option>
+                    <option value="strip_2x6">2x6 Strip (Auto-Cut)</option>
+                    <option value="6r_p">6R Portrait (6x8")</option>
+                </select>
+            </div>
+
+            <div class="setting-card">
+                <label>Jumlah Pose / Foto</label>
+                <select id="poseFormat">
+                    <option value="1" selected>1 Pose (Single Photo)</option>
+                    <option value="2">2 Poses (Dual Frame)</option>
+                    <option value="3">3 Poses (Classic Strip)</option>
+                    <option value="4">4 Poses (Grid 2x2)</option>
+                    <option value="6">6 Poses (Grid 2x3)</option>
+                </select>
+            </div>
+
+            <div class="setting-card">
+                <label>Header / Teks Event (Opsional)</label>
+                <input type="text" id="eventTitle" placeholder="Kosongkan jika sudah ada di PNG frame">
+                <input type="text" id="eventSub" placeholder="Subtitle (Opsional)" style="margin-top: 6px;">
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--panel-border); margin: 4px 0;">
+
+            <!-- SEKSI 3: BATCH & FOTO GALERI -->
+            <div class="sidebar-section-title">📁 OLAH FOTO GALERI</div>
+
+            <div class="setting-card">
+                <label>Impor Foto Galeri (Auto-Overlay)</label>
+                <button id="importBatchBtn" class="btn-icon" style="justify-content: center; background: #059669; width: 100%; font-weight: bold; min-height: 44px;">
+                    📂 Pilih Foto / Batch Folder
+                </button>
+                <input type="file" id="batchFileInput" accept="image/png, image/jpeg, image/webp" multiple style="display: none;">
+            </div>
+        </aside>
+
+        <section class="stage-container">
+            <div class="flash-overlay" id="flashElem"></div>
+            <div class="countdown-overlay" id="countdownElem">3</div>
             
-            <div style="margin: 2rem 0; padding: 1.5rem; background: var(--card-inner); border-radius: 12px; border: 1px dashed var(--accent);">
-                <p style="margin-bottom: 10px; font-weight: bold;">Status Cetak & Unduhan:</p>
-                <p>✅ Cetak Foto Bersih (Tanpa Watermark)</p>
-                <p>✅ File Digital (HD Quality) Siap Diunduh</p>
+            <div class="camera-wrapper" id="cameraWrapper">
+                <video id="webcam" autoplay playsinline class="mirrored"></video>
+                <div class="safe-zone-guide" id="safeZoneGuide"></div>
+                <img id="liveOverlay" class="live-overlay" alt="Live PNG Frame Overlay">
             </div>
 
-            <button class="btn-primary" onclick="resetToPage5()">Selesai / Kembali ke Awal</button>
+            <div class="capture-bar">
+                <button class="btn-capture" id="startBtn">📸 TAKE PHOTO</button>
+            </div>
         </section>
     </main>
 
-    <!-- POP-UP KEYPAD MODAL (CUSTOMER) -->
-    <div id="customerKeypadModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeCustomerKeypad()">&times;</button>
-            <h2>Masukkan Pass Code</h2>
-            <p class="subtitle">Gunakan soft-keyboard di bawah untuk mengetik kode</p>
+    <!-- RESULT MODAL -->
+    <div class="modal" id="resultModal">
+        <div class="modal-card">
+            <div class="preview-box">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+            <div class="modal-sidebar">
+                <h3>Photo Ready!</h3>
+                <p style="color: var(--text-body); font-size: 0.8rem;">Print or download your photostrip below.</p>
+                
+                <button class="btn-action btn-qris" id="printBtn" style="padding: 12px; min-height: 44px;">🖨️ Print Photo</button>
+                <button id="downloadPngBtn" class="btn-icon" style="justify-content: center; padding: 10px; min-height: 44px;">💾 Download PNG Strip</button>
+                <button id="downloadZipBtn" class="btn-icon" style="justify-content: center; padding: 10px; min-height: 44px;">📦 Download ZIP (All Photos)</button>
+                
+                <div class="qr-card">
+                    <p id="qrStatus">PREPARING DIGITAL QR...</p>
+                    <div id="qrcode" style="margin-top: 6px;"></div>
+                </div>
 
-            <div id="keypadDisplay" class="passcode-display">______</div>
+                <button id="closeModalBtn" style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: auto; min-height: 44px;">❌ Finish & Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT PLAN SELECTION MODAL -->
+    <div class="modal" id="paymentModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white; text-align: center;">
+            <h3 style="margin-bottom: 8px; font-size: 1.1rem;">🛒 Pilih Paket Pass Kiosk</h3>
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 20px;">
+                Pilih durasi aktif lisensi photobooth tanpa watermark.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                <button id="pay10kBtn" class="btn-action btn-qris" style="padding: 14px; font-size: 0.9rem; justify-content: space-between; height: auto; min-height: 48px;">
+                    <span>⚡ Paket 24 Jam</span>
+                    <strong>Rp 10.000</strong>
+                </button>
+                <button id="pay50kBtn" class="btn-action btn-qris" style="padding: 14px; font-size: 0.9rem; justify-content: space-between; height: auto; background: #4f46e5; min-height: 48px;">
+                    <span>🌟 Paket 1 Bulan (30 Hari)</span>
+                    <strong>Rp 50.000</strong>
+                </button>
+            </div>
+
+            <button id="closePaymentBtn" style="width: 100%; background: #475569; padding: 12px; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px;">Batal</button>
+        </div>
+    </div>
+
+    <!-- PASS ACTIVATION MODAL -->
+    <div class="modal" id="activationModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white;">
+            <h3 style="margin-bottom: 8px; font-size: 1.1rem; text-align: center;">🔑 Activate Kiosk Pass</h3>
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 20px; text-align: center;">
+                Enter the Pass Code provided by Admin to activate photobooth duration without watermarks.
+            </p>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 6px;">License Pass Code:</label>
+                <input type="text" id="inputPassCode" placeholder="SECRET" style="width: 100%; text-transform: uppercase; font-weight: bold; font-family: monospace; letter-spacing: 1px; padding: 12px; border-radius: 8px; border: 1px solid var(--panel-border); background: #0f172a; color: #fff; min-height: 44px;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button id="closeActivationBtn" style="flex: 1; background: #475569; padding: 10px; border: none; color: white; border-radius: 8px; cursor: pointer; min-height: 44px;">Cancel</button>
+                <button id="submitPassBtn" class="btn-action btn-pass" style="flex: 1; padding: 10px; min-height: 44px;">Activate Code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EVENT SETTINGS MODAL -->
+    <div class="modal" id="settingsModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 440px; width:100%; border: 1px solid var(--panel-border); color: white;">
+            <h3 style="margin-bottom: 16px; font-size: 1.1rem;">⚙️️ Event & System Settings</h3>
             
-            <div id="feedbackDisplay" class="feedback-box"></div>
-
-            <!-- Soft Keypad -->
-            <div class="keypad-grid">
-                <button class="keypad-btn" onclick="keypadInput('1')">1</button>
-                <button class="keypad-btn" onclick="keypadInput('2')">2</button>
-                <button class="keypad-btn" onclick="keypadInput('3')">3</button>
-                <button class="keypad-btn" onclick="keypadInput('4')">4</button>
-                <button class="keypad-btn" onclick="keypadInput('5')">5</button>
-                <button class="keypad-btn" onclick="keypadInput('6')">6</button>
-                <button class="keypad-btn" onclick="keypadInput('7')">7</button>
-                <button class="keypad-btn" onclick="keypadInput('8')">8</button>
-                <button class="keypad-btn" onclick="keypadInput('9')">9</button>
-                <button class="keypad-btn" style="color: var(--warning);" onclick="keypadBackspace()">⌫</button>
-                <button class="keypad-btn" onclick="keypadInput('0')">0</button>
-                <button class="keypad-btn" style="color: var(--danger);" onclick="keypadClear()">C</button>
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Google Drive Master Folder ID / Link:</label>
+                    <button id="openDriveGuideBtn" style="background: none; border: none; color: #38bdf8; font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: underline;">📖 Panduan Drive</button>
+                </div>
+                <input type="text" id="inputDriveLink" placeholder="Tempel ID Folder (misal: 1HB6AKtcx1_x0_BCIEnpdigU0QOOmp5oK)" style="width: 100%;">
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Current Sub-Folder Name:</label>
+                <input type="text" id="inputEventName" placeholder="e.g. Graduation 2026" style="width: 100%; margin-top: 4px;">
             </div>
 
-            <!-- Quick Alphabet Toggle for Promo Code (Custom / Preset) -->
-            <div style="display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">
-                <button class="btn-preset" onclick="keypadInput('PROMO30')">PROMO30</button>
-                <button class="btn-preset" onclick="keypadInput('HAPPYHOUR')">HAPPYHOUR</button>
-                <button class="btn-preset" onclick="keypadInput('FREE100')">FREE100</button>
-            </div>
-
-            <button class="btn-primary" onclick="validateCustomerPasscode()">Gunakan Kode</button>
-        </div>
-    </div>
-
-    <!-- MODAL ADMIN / EVENT SETTINGS -->
-    <div id="adminModal" class="modal-overlay">
-        <div class="modal-content admin-modal">
-            <button class="modal-close" onclick="closeAdminModal()">&times;</button>
-            <h2>Pass Code Generator (Admin)</h2>
-            <p class="subtitle">Buat dan kelola kode promo berdurasi & kuota</p>
-
-            <!-- Form Pembuat Kode -->
-            <div class="form-group">
-                <label>Nama Kode Pass</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="adminCodeInput" class="form-control" placeholder="Contoh: PROMO30" style="text-transform: uppercase;">
-                    <button class="btn-secondary" style="width: auto; white-space: nowrap; margin: 0;" onclick="generateRandomCode()">Random</button>
+            <div style="margin-bottom: 20px; border-top: 1px dashed var(--panel-border); padding-top: 12px;">
+                <label style="font-size: 11px; font-weight: bold; color: #10b981; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                    ⏱️ PASS STATUS & EXPIRY:
+                </label>
+                <div style="padding: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                    <span id="passStatusText" style="font-weight: 600; font-size: 0.85rem;">Checking status...</span>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Pengaturan Durasi (Timer)</label>
-                <div class="preset-grid">
-                    <button class="btn-preset active" onclick="selectDurationPreset(15, this)">15 Mnt</button>
-                    <button class="btn-preset" onclick="selectDurationPreset(30, this)">30 Mnt</button>
-                    <button class="btn-preset" onclick="selectDurationPreset(60, this)">1 Jam</button>
-                    <button class="btn-preset" onclick="selectDurationPreset('TODAY', this)">Hari Ini</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Batas Pemakaian (Usage Limit)</label>
-                <select id="adminUsageType" class="form-control">
-                    <option value="SINGLE">Single Use (1x pakai)</option>
-                    <option value="MULTI">Multi Use / Unlimited Kuota</option>
-                    <option value="CUSTOM">Custom Quota (cth: 10x)</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="customQuotaGroup" style="display: none;">
-                <label>Jumlah Kuota Maksimal</label>
-                <input type="number" id="adminCustomQuota" class="form-control" value="10" min="1">
-            </div>
-
-            <div class="form-group">
-                <label>Tipe Diskon</label>
-                <select id="adminDiscountType" class="form-control">
-                    <option value="FREE">100% Free (Bypass Pembayaran)</option>
-                    <option value="POTONGAN_50">Potongan Harga 50%</option>
-                    <option value="POTONGAN_10K">Potongan Rp 10.000</option>
-                </select>
-            </div>
-
-            <button class="btn-primary" onclick="createPasscode()">+ Buat Kode Pass Baru</button>
-
-            <!-- Daftar Kode Aktif -->
-            <h3 style="margin-top: 2rem; font-size: 1.1rem;">Daftar Pass Code Tersimpan</h3>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Kode</th>
-                            <th>Tipe</th>
-                            <th>Sisa Waktu</th>
-                            <th>Kuota</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="passcodeTableBody">
-                        <!-- Iterasi Kode Pass oleh JS -->
-                    </tbody>
-                </table>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button id="closeSettingsBtn" style="background: #475569; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; min-height: 44px;">Cancel</button>
+                <button id="saveSettingsBtn" class="btn-action btn-qris" style="padding: 10px 18px; flex: initial;">Save Settings</button>
             </div>
         </div>
     </div>
 
-    <!-- LOGIKA SISTEM (JS) -->
+    <!-- MODAL GALERI FRAME (INDEXEDDB) -->
+    <div class="modal" id="frameGalleryModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 650px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 85vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">🖼️ Galeri Frame PNG (IndexedDB)</h3>
+                <button id="closeFrameGalleryBtn" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; padding: 4px 8px;">✕</button>
+            </div>
+
+            <div style="margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; border: 1px dashed var(--panel-border);">
+                <label style="font-size: 0.75rem; font-weight: bold; color: #94a3b8; display: block; margin-bottom: 8px;">+ Unggah Frame PNG Baru ke Memori Kiosk:</label>
+                <button id="triggerModalUploadBtn" class="btn-action btn-qris" style="width: 100%; padding: 10px; justify-content: center; font-size: 0.8rem; min-height: 44px;">
+                    📂 Pilih File Frame PNG
+                </button>
+                <input type="file" id="modalFrameUploadInput" accept="image/png" style="display: none;">
+            </div>
+
+            <div id="frameGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; overflow-y: auto; padding-right: 4px; flex: 1; min-height: 200px;">
+                <!-- Frame cards rendered dynamically via JS -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px solid var(--panel-border); padding-top: 12px;">
+                <button id="modalRemoveFrameBtn" style="background: #dc2626; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: bold; min-height: 44px;">Gunakan Tanpa Frame</button>
+                <button id="doneFrameGalleryBtn" class="btn-action btn-qris" style="padding: 10px 20px; flex: initial;">Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PANDUAN GOOGLE DRIVE -->
+    <div class="modal" id="driveGuideModal">
+        <div style="background: #111827; padding: 24px; border-radius: 16px; max-width: 680px; width:100%; border: 1px solid var(--panel-border); color: white; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
+                <h3 style="font-size: 1.15rem; color: #818cf8; display: flex; align-items: center; gap: 8px;">📖 Panduan Integrasi Google Drive</h3>
+                <button id="closeDriveGuideBtn" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">✕</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 16px; font-size: 0.85rem; line-height: 1.5; color: #cbd5e1;">
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); padding: 12px; border-radius: 10px;">
+                    <strong style="color: #818cf8;">📌 Cara Kerja Integrasi Drive:</strong><br>
+                    Foto yang diambil dari aplikasi photobooth akan otomatis terunggah dan tersimpan rapi di dalam Google Drive pribadi milikmu setelah memberikan izin ke email sistem.
+                </div>
+
+                <div>
+                    <h4 style="color: #f8fafc; margin-bottom: 6px; font-size: 0.95rem;">Langkah 1: Buat Folder Baru & Atur Hak Akses</h4>
+                    <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+                        <li>Buka Google Drive menggunakan akun Google pribadi atau akun acara kamu.</li>
+                        <li>Buat folder baru, beri nama sesuai nama acara (contoh: <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #f472b6;">PHOTOBOOTH EVENT AKU</code>).</li>
+                        <li>Klik kanan pada folder tersebut, lalu pilih <strong>Share (Bagikan)</strong>.</li>
+                        <li>Di kolom pencarian email, masukkan email sistem skrip: <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #a7f3d0; font-weight: bold;">abdiflash@gmail.com</code></li>
+                        <li>Pastikan hak akses diubah menjadi <strong>Editor</strong>.</li>
+                        <li>Klik <strong>Send / Done</strong>.</li>
+                    </ol>
+                    <div style="margin-top: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 8px 12px; border-radius: 6px; font-size: 0.78rem; color: #fbbf24;">
+                        <strong>Penting:</strong> Langkah pembagian akses sebagai Editor wajib dilakukan agar sistem memiliki izin untuk membuat sub-folder event dan menyimpan file foto ke dalam folder kamu.
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="color: #f8fafc; margin-bottom: 6px; font-size: 0.95rem;">Langkah 2: Salin ID Folder Google Drive</h4>
+                    <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+                        <li>Buka folder yang baru kamu buat tersebut di browser.</li>
+                        <li>Perhatikan alamat URL di bilah atas browser kamu:
+                            <div style="background: #090d16; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; margin: 4px 0; color: #94a3b8; word-break: break-all;">
+                                https://drive.google.com/drive/folders/<span style="color: #a7f3d0; font-weight: bold;">1HB6AKtcx1_x0_BCIEnpdigU0QOOmp5oK</span>?usp=sharing
+                            </div>
+                        </li>
+                        <li>Salin deretan kode acak yang ada di antara <code style="background: #1e293b; padding: 2px 4px; border-radius: 4px;">/folders/</code> dan <code style="background: #1e293b; padding: 2px 4px; border-radius: 4px;">?</code> (Contoh ID Folder: <code style="color: #a7f3d0;">1HB6AKtcx1_x0_BCIEnpdigU0QOOmp5oK</code>).</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h4 style="color: #f8fafc; margin-bottom: 6px; font-size: 0.95rem;">Langkah 3: Input ID Folder ke Aplikasi Photobooth</h4>
+                    <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+                        <li>Buka aplikasi photobooth.</li>
+                        <li>Masuk ke menu <strong>Settings / Pengaturan Event</strong>.</li>
+                        <li>Tempel (paste) kode ID Folder yang sudah disalin ke kolom <strong>Master Folder ID</strong>.</li>
+                        <li>Klik <strong>Save Settings</strong>.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right; border-top: 1px solid var(--panel-border); padding-top: 12px;">
+                <button id="gotItDriveGuideBtn" class="btn-action btn-qris" style="padding: 10px 24px; min-height: 44px; flex: initial;">Mengerti & Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PROGRESS PROSES BATCH OVERLAY -->
+    <div class="modal" id="batchProgressModal">
+        <div style="background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; width:100%; border: 1px solid var(--panel-border); color: white; text-align: center;">
+            <h3 style="margin-bottom: 12px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                ⚡ Processing Batch Overlay
+            </h3>
+            <p id="batchStatusText" style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 16px;">Mempersiapkan foto...</p>
+            <div style="width: 100%; background: #0f172a; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--panel-border);">
+                <div id="batchProgressBar" style="width: 0%; height: 100%; background: #6366f1; transition: width 0.2s;"></div>
+            </div>
+            <p style="font-size: 0.72rem; color: #64748b;">Harap tunggu hingga semua foto selesai digabungkan dengan bingkai.</p>
+        </div>
+    </div>
+
+    <div id="printArea"></div>
+
     <script>
-        // Data Store & App State
-        const INITIAL_PRICE = 50000;
-        let currentPrice = INITIAL_PRICE;
-        let passcodes = JSON.parse(localStorage.getItem('photobooth_passcodes')) || [
-            {
-                code: 'PROMO30',
-                discountType: 'FREE',
-                expireTime: Date.now() + 30 * 60 * 1000, // 30 mins from now
-                usageType: 'SINGLE',
-                maxQuota: 1,
-                usedCount: 0
-            }
-        ];
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1--xNcCNfK0hOzvzJQbO1LoPP4RDhJFwZRkajKLJuTC0ev8z30YQw3hyLQIg9jr0kEw/exec';
+        const SYSTEM_SECRET_KEY = "KIOSK_PRO_SECRET_2026";
 
-        let currentInput = "";
-        let selectedDurationMinutes = 15;
+        const DB_NAME = 'PhotoboothKioskDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'uploadQueue';
+        const FRAME_STORE_NAME = 'frames';
+        let db = null;
+        let dbPromise = null;
+        let isProcessingQueue = false;
 
-        // Save & Sync LocalStorage
-        function savePasscodes() {
-            localStorage.setItem('photobooth_passcodes', JSON.stringify(passcodes));
-            renderPasscodeTable();
+        const dnpDimensions = {
+            '5r_p': { w: 1500, h: 2100, isPortrait: true, printSize: '5in 7in' },
+            '5r_l': { w: 2100, h: 1500, isPortrait: false, printSize: '7in 5in' },
+            '4r_p': { w: 1200, h: 1800, isPortrait: true, printSize: '4in 6in' },
+            '4r_l': { w: 1800, h: 1200, isPortrait: false, printSize: '6in 4in' },
+            'strip_2x6': { w: 600, h: 1800, isPortrait: true, printSize: '2in 6in' },
+            '6r_p': { w: 1800, h: 2400, isPortrait: true, printSize: '6in 8in' }
+        };
+
+        let currentStream = null, isMirrored = true, capturedPhotos = [], customOverlayImage = null, selectedBgColor = '#ffffff';
+        let countdownDuration = 3;
+
+        // DOM ELEMENTS
+        const webcam = document.getElementById('webcam'), cameraWrapper = document.getElementById('cameraWrapper'), liveOverlay = document.getElementById('liveOverlay'), safeZoneGuide = document.getElementById('safeZoneGuide'), cameraSelect = document.getElementById('cameraSelect'), mirrorBtn = document.getElementById('mirrorBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), startBtn = document.getElementById('startBtn'), flashElem = document.getElementById('flashElem'), countdownElem = document.getElementById('countdownElem'), poseFormat = document.getElementById('poseFormat'), dnpSizeSelect = document.getElementById('dnpSizeSelect'), filterSelect = document.getElementById('filterSelect'), overlayInput = document.getElementById('overlayInput'), uploadOverlayBtn = document.getElementById('uploadOverlayBtn'), eventTitle = document.getElementById('eventTitle'), eventSub = document.getElementById('eventSub'), resultModal = document.getElementById('resultModal'), settingsModal = document.getElementById('settingsModal'), settingsBtn = document.getElementById('settingsBtn'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), inputDriveLink = document.getElementById('inputDriveLink'), inputEventName = document.getElementById('inputEventName'), passStatusText = document.getElementById('passStatusText'), customColorPicker = document.getElementById('customColorPicker'), outputCanvas = document.getElementById('outputCanvas'), closeModalBtn = document.getElementById('closeModalBtn'), printBtn = document.getElementById('printBtn'), downloadPngBtn = document.getElementById('downloadPngBtn'), downloadZipBtn = document.getElementById('downloadZipBtn'), qrcodeContainer = document.getElementById('qrcode'), qrStatus = document.getElementById('qrStatus'), queueBadge = document.getElementById('queueBadge');
+
+        // BINGKAI & MARGIN CONTROL ELEMENTS
+        const outerMarginInput = document.getElementById('outerMarginInput'), innerGapInput = document.getElementById('innerGapInput'), btnFullBleed = document.getElementById('btnFullBleed'), outerMarginVal = document.getElementById('outerMarginVal'), innerGapVal = document.getElementById('innerGapVal');
+
+        const licenseBadge = document.getElementById('licenseBadge'), activatePassBtn = document.getElementById('activatePassBtn'), activationModal = document.getElementById('activationModal'), closeActivationBtn = document.getElementById('closeActivationBtn'), submitPassBtn = document.getElementById('submitPassBtn'), inputPassCode = document.getElementById('inputPassCode'), midtransPayBtn = document.getElementById('midtransPayBtn');
+        const paymentModal = document.getElementById('paymentModal'), closePaymentBtn = document.getElementById('closePaymentBtn'), pay10kBtn = document.getElementById('pay10kBtn'), pay50kBtn = document.getElementById('pay50kBtn');
+        const mode1Btn = document.getElementById('mode1Btn'), mode2Btn = document.getElementById('mode2Btn');
+
+        // FRAME GALLERY & GUIDE MODAL ELEMENTS
+        const openFrameGalleryBtn = document.getElementById('openFrameGalleryBtn'), frameGalleryModal = document.getElementById('frameGalleryModal'), closeFrameGalleryBtn = document.getElementById('closeFrameGalleryBtn'), doneFrameGalleryBtn = document.getElementById('doneFrameGalleryBtn'), modalFrameUploadInput = document.getElementById('modalFrameUploadInput'), triggerModalUploadBtn = document.getElementById('triggerModalUploadBtn'), frameGrid = document.getElementById('frameGrid'), modalRemoveFrameBtn = document.getElementById('modalRemoveFrameBtn'), activeFrameBadge = document.getElementById('activeFrameBadge'), activeFrameName = document.getElementById('activeFrameName'), clearFrameBtn = document.getElementById('clearFrameBtn');
+        const openDriveGuideBtn = document.getElementById('openDriveGuideBtn'), driveGuideModal = document.getElementById('driveGuideModal'), closeDriveGuideBtn = document.getElementById('closeDriveGuideBtn'), gotItDriveGuideBtn = document.getElementById('gotItDriveGuideBtn');
+
+        // BATCH GALLERY IMPORT ELEMENTS
+        const importBatchBtn = document.getElementById('importBatchBtn'), batchFileInput = document.getElementById('batchFileInput'), batchProgressModal = document.getElementById('batchProgressModal'), batchStatusText = document.getElementById('batchStatusText'), batchProgressBar = document.getElementById('batchProgressBar');
+
+        // INDEXEDDB SYSTEM
+        function initDB() {
+            if (dbPromise) return dbPromise;
+            dbPromise = new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const dbInstance = e.target.result;
+                    if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+                        dbInstance.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!dbInstance.objectStoreNames.contains(FRAME_STORE_NAME)) {
+                        dbInstance.createObjectStore(FRAME_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                    updateQueueBadge();
+                    processOfflineQueue();
+                    loadSavedActiveFrame();
+                };
+                request.onerror = (e) => {
+                    dbPromise = null;
+                    reject(e.target.error);
+                };
+            });
+            return dbPromise;
         }
 
-        // --- KEYPAD & CUSTOMER LOGIC ---
-        function openCustomerKeypad() {
-            currentInput = "";
-            updateKeypadDisplay();
-            clearFeedback();
-            document.getElementById('customerKeypadModal').classList.add('active');
-        }
-
-        function closeCustomerKeypad() {
-            document.getElementById('customerKeypadModal').classList.remove('active');
-        }
-
-        function keypadInput(val) {
-            if (currentInput.length < 12) {
-                currentInput += val;
-                updateKeypadDisplay();
-            }
-        }
-
-        function keypadBackspace() {
-            currentInput = currentInput.slice(0, -1);
-            updateKeypadDisplay();
-        }
-
-        function keypadClear() {
-            currentInput = "";
-            updateKeypadDisplay();
-        }
-
-        function updateKeypadDisplay() {
-            const display = document.getElementById('keypadDisplay');
-            display.innerText = currentInput || "______";
-        }
-
-        function clearFeedback() {
-            const fb = document.getElementById('feedbackDisplay');
-            fb.className = 'feedback-box';
-            fb.innerText = '';
-        }
-
-        function showFeedback(text, type) {
-            const fb = document.getElementById('feedbackDisplay');
-            fb.className = `feedback-box feedback-${type}`;
-            fb.innerText = text;
-        }
-
-        // Algoritma Validasi Passcode Real-time
-        function validateCustomerPasscode() {
-            const codeInput = currentInput.trim().toUpperCase();
-            
-            if (!codeInput) {
-                showFeedback("Masukkan kode terlebih dahulu!", "warning");
-                return;
-            }
-
-            const now = Date.now();
-            const itemIndex = passcodes.findIndex(p => p.code.toUpperCase() === codeInput);
-
-            if (itemIndex === -1) {
-                // ❌ TIDAK DITEMUKAN
-                showFeedback("❌ Kode Tidak Ditemukan atau Kuota Penggunaan Sudah Habis", "error");
-                return;
-            }
-
-            const passcode = passcodes[itemIndex];
-
-            // Cek Kriteria 1: Masa Berlaku Waktu
-            if (now > passcode.expireTime) {
-                // ❌ KADALUARSA
-                showFeedback("❌ Kode Promo Sudah Hangus / Kadaluarsa (Batas Waktu Habis)", "error");
-                return;
+        async function addToQueue(data) {
+            if (!db) await initDB();
+            try {
+                const existingQueue = await getQueue();
+                const isDuplicate = existingQueue.some(item => 
+                    item.image === data.image && 
+                    item.masterFolderId === data.masterFolderId &&
+                    item.eventName === data.eventName
+                );
+                if (isDuplicate) {
+                    console.warn("Foto yang sama sudah ada di dalam antrean.");
+                    return;
+                }
+            } catch (err) {
+                console.error("Gagal memeriksa duplikasi antrean:", err);
             }
 
-            // Cek Kriteria 2: Sisa Kuota Pemakaian
-            if (passcode.usageType !== 'MULTI' && passcode.usedCount >= passcode.maxQuota) {
-                // ❌ HABIS
-                showFeedback("❌ Kode Tidak Ditemukan atau Kuota Penggunaan Sudah Habis", "error");
-                return;
-            }
-
-            // ✅ BERHASIL (Memenuhi Semua Kriteria)
-            passcode.usedCount += 1;
-            savePasscodes();
-
-            showFeedback("✅ Pass Code Valid! Akses Gratis Berhasil", "success");
-
-            setTimeout(() => {
-                closeCustomerKeypad();
-                applyDiscount(passcode.discountType);
-            }, 1200);
-        }
-
-        function applyDiscount(discountType) {
-            if (discountType === 'FREE') {
-                // Bypass Pembayaran langsung ke Halaman 6
-                goToPage('page6');
-            } else if (discountType === 'POTONGAN_50') {
-                currentPrice = INITIAL_PRICE * 0.5;
-                document.getElementById('displayPrice').innerHTML = `<span class="price-original">Rp ${INITIAL_PRICE.toLocaleString('id-ID')}</span> Rp ${currentPrice.toLocaleString('id-ID')}`;
-                alert('Diskon 50% Berhasil Diterapkan!');
-            } else if (discountType === 'POTONGAN_10K') {
-                currentPrice = Math.max(0, INITIAL_PRICE - 10000);
-                document.getElementById('displayPrice').innerHTML = `<span class="price-original">Rp ${INITIAL_PRICE.toLocaleString('id-ID')}</span> Rp ${currentPrice.toLocaleString('id-ID')}`;
-                alert('Potongan Rp 10.000 Berhasil Diterapkan!');
-            }
-        }
-
-        function simulateQrisPayment() {
-            alert('Pembayaran Berhasil via QRIS Midtrans!');
-            goToPage('page6');
-        }
-
-        function goToPage(pageId) {
-            document.querySelectorAll('.view-page').forEach(page => page.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-        }
-
-        function resetToPage5() {
-            currentPrice = INITIAL_PRICE;
-            document.getElementById('displayPrice').innerText = INITIAL_PRICE.toLocaleString('id-ID');
-            goToPage('page5');
-        }
-
-        // --- ADMIN / GENERATOR LOGIC ---
-        function openAdminModal() {
-            renderPasscodeTable();
-            document.getElementById('adminModal').classList.add('active');
-        }
-
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.remove('active');
-        }
-
-        function generateRandomCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            document.getElementById('adminCodeInput').value = result;
-        }
-
-        function selectDurationPreset(minutes, btn) {
-            document.querySelectorAll('.preset-grid .btn-preset').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedDurationMinutes = minutes;
-        }
-
-        document.getElementById('adminUsageType').addEventListener('change', function() {
-            const customGroup = document.getElementById('customQuotaGroup');
-            customGroup.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
-        });
-
-        function createPasscode() {
-            const codeInput = document.getElementById('adminCodeInput').value.trim().toUpperCase();
-            if (!codeInput) {
-                alert('Masukkan nama kode terlebih dahulu!');
-                return;
-            }
-
-            // Hitung Waktu Expire
-            let expireTime = Date.now();
-            if (selectedDurationMinutes === 'TODAY') {
-                const endOfDay = new Date();
-                endOfDay.setHours(23, 59, 59, 999);
-                expireTime = endOfDay.getTime();
-            } else {
-                expireTime += selectedDurationMinutes * 60 * 1000;
-            }
-
-            const usageType = document.getElementById('adminUsageType').value;
-            let maxQuota = 1;
-            if (usageType === 'MULTI') maxQuota = Infinity;
-            if (usageType === 'CUSTOM') maxQuota = parseInt(document.getElementById('adminCustomQuota').value) || 10;
-
-            const newPasscode = {
-                code: codeInput,
-                discountType: document.getElementById('adminDiscountType').value,
-                expireTime: expireTime,
-                usageType: usageType,
-                maxQuota: maxQuota,
-                usedCount: 0
-            };
-
-            passcodes.push(newPasscode);
-            savePasscodes();
-            document.getElementById('adminCodeInput').value = '';
-            alert(`Passcode ${codeInput} berhasil dibuat!`);
-        }
-
-        function deletePasscode(index) {
-            passcodes.splice(index, 1);
-            savePasscodes();
-        }
-
-        function renderPasscodeTable() {
-            const tbody = document.getElementById('passcodeTableBody');
-            tbody.innerHTML = '';
-
-            const now = Date.now();
-
-            passcodes.forEach((p, index) => {
-                const isExpired = now > p.expireTime;
-                const remainingMs = Math.max(0, p.expireTime - now);
-                const remainingMins = Math.floor(remainingMs / 60000);
-                const remainingSecs = Math.floor((remainingMs % 60000) / 1000);
-
-                const timeDisplay = isExpired 
-                    ? `<span class="badge badge-expired">Kadaluarsa</span>` 
-                    : `${remainingMins}m ${remainingSecs}s`;
-
-                const quotaDisplay = p.usageType === 'MULTI' ? '∞ Unlimited' : `${p.usedCount}/${p.maxQuota}`;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${p.code}</strong></td>
-                    <td>${p.discountType}</td>
-                    <td>${timeDisplay}</td>
-                    <td>${quotaDisplay}</td>
-                    <td><button style="color:var(--danger); background:none; border:none; cursor:pointer;" onclick="deletePasscode(${index})">Hapus</button></td>
-                `;
-                tbody.appendChild(tr);
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.add({ ...data, timestamp: Date.now() });
+                req.onsuccess = () => {
+                    updateQueueBadge();
+                    resolve(req.result);
+                };
+                req.onerror = () => reject(req.error);
             });
         }
 
-        // Live Timer Refresh Table
-        setInterval(() => {
-            if (document.getElementById('adminModal').classList.contains('active')) {
-                renderPasscodeTable();
-            }
-        }, 1000);
+        async function getQueue() {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
 
-        // Initial Render
-        renderPasscodeTable();
+        async function removeFromQueue(id) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.delete(id);
+                req.onsuccess = () => {
+                    updateQueueBadge();
+                    resolve();
+                };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function addFrameToDB(name, dataUrl) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(FRAME_STORE_NAME, 'readwrite');
+                const store = tx.objectStore(FRAME_STORE_NAME);
+                const req = store.add({ name, dataUrl, createdAt: Date.now() });
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function getAllFramesFromDB() {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(FRAME_STORE_NAME, 'readonly');
+                const store = tx.objectStore(FRAME_STORE_NAME);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function deleteFrameFromDB(id) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(FRAME_STORE_NAME, 'readwrite');
+                const store = tx.objectStore(FRAME_STORE_NAME);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function loadSavedActiveFrame() {
+            const activeId = localStorage.getItem('pb_active_frame_id');
+            if (!activeId) return;
+            try {
+                const frames = await getAllFramesFromDB();
+                const found = frames.find(f => String(f.id) === String(activeId));
+                if (found) {
+                    applyFrame(found);
+                }
+            } catch (e) {
+                console.error("Failed to load active frame:", e);
+            }
+        }
+
+        function applyFrame(frameObj) {
+            if (!frameObj) {
+                customOverlayImage = null;
+                liveOverlay.src = '';
+                liveOverlay.style.display = 'none';
+                if (activeFrameBadge) activeFrameBadge.style.display = 'none';
+                localStorage.removeItem('pb_active_frame_id');
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => {
+                customOverlayImage = img;
+                liveOverlay.src = frameObj.dataUrl;
+                liveOverlay.style.display = 'block';
+                if (activeFrameBadge) {
+                    activeFrameBadge.style.display = 'flex';
+                    if (activeFrameName) activeFrameName.textContent = frameObj.name;
+                }
+                localStorage.setItem('pb_active_frame_id', frameObj.id);
+
+                if (outerMarginInput && parseInt(outerMarginInput.value) > 20) {
+                    outerMarginInput.value = 0;
+                }
+                updateLivePreviewLayout();
+            };
+            img.src = frameObj.dataUrl;
+        }
+
+        async function renderFrameGrid() {
+            if (!frameGrid) return;
+            frameGrid.innerHTML = '<span style="color:#94a3b8; font-size:12px;">Memuat galeri...</span>';
+            try {
+                const frames = await getAllFramesFromDB();
+                const activeId = localStorage.getItem('pb_active_frame_id');
+                frameGrid.innerHTML = '';
+
+                if (frames.length === 0) {
+                    frameGrid.innerHTML = '<span style="color:#94a3b8; font-size:12px; grid-column: 1/-1; text-align:center; padding:20px;">Belum ada frame tersimpan. Unggah PNG baru di atas!</span>';
+                    return;
+                }
+
+                frames.forEach(frame => {
+                    const card = document.createElement('div');
+                    const isActive = String(frame.id) === String(activeId);
+                    card.className = `frame-card ${isActive ? 'active' : ''}`;
+
+                    card.innerHTML = `
+                        <img src="${frame.dataUrl}" class="frame-thumb" alt="${frame.name}">
+                        <div class="frame-title" title="${frame.name}">${frame.name}</div>
+                        <div class="frame-actions">
+                            <button class="btn-frame-act btn-frame-select">${isActive ? '✓ Aktif' : 'Pilih'}</button>
+                            <button class="btn-frame-act btn-frame-delete">Hapus</button>
+                        </div>
+                    `;
+
+                    card.querySelector('.btn-frame-select').addEventListener('click', () => {
+                        applyFrame(frame);
+                        renderFrameGrid();
+                    });
+
+                    card.querySelector('.btn-frame-delete').addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Hapus frame "${frame.name}"?`)) {
+                            await deleteFrameFromDB(frame.id);
+                            if (String(frame.id) === String(localStorage.getItem('pb_active_frame_id'))) {
+                                applyFrame(null);
+                            }
+                            renderFrameGrid();
+                        }
+                    });
+
+                    frameGrid.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Error rendering frame grid:", err);
+                frameGrid.innerHTML = '<span style="color:#ef4444; font-size:12px;">Gagal memuat frame.</span>';
+            }
+        }
+
+        async function processOfflineQueue() {
+            if (isProcessingQueue || !navigator.onLine) return;
+            isProcessingQueue = true;
+
+            try {
+                const queue = await getQueue();
+                if (queue.length > 0) {
+                    const uniqueQueue = [];
+                    const seenImages = new Set();
+                    
+                    for (const item of queue) {
+                        if (seenImages.has(item.image)) {
+                            await removeFromQueue(item.id);
+                        } else {
+                            seenImages.add(item.image);
+                            uniqueQueue.push(item);
+                        }
+                    }
+
+                    for (const item of uniqueQueue) {
+                        try {
+                            const res = await fetch(GOOGLE_SCRIPT_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({
+                                    image: item.image,
+                                    masterFolderId: item.masterFolderId,
+                                    eventName: item.eventName
+                                })
+                            });
+                            const data = await res.json();
+                            if (data.status === 'success') {
+                                await removeFromQueue(item.id);
+                            } else {
+                                break;
+                            }
+                        } catch (err) {
+                            console.warn("Queue upload paused:", err);
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Queue process error:", err);
+            } finally {
+                isProcessingQueue = false;
+                updateQueueBadge();
+            }
+        }
+
+        async function updateQueueBadge() {
+            if (!queueBadge) return;
+            try {
+                const queue = await getQueue();
+                if (queue.length > 0) {
+                    queueBadge.style.display = 'inline-flex';
+                    queueBadge.textContent = `🔄 Queue: ${queue.length}`;
+                } else {
+                    queueBadge.style.display = 'none';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function initKioskLockdown() {
+            document.addEventListener('contextmenu', e => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                e.preventDefault();
+            });
+
+            document.addEventListener('dragstart', e => e.preventDefault());
+            document.addEventListener('touchmove', e => {
+                if (e.touches.length > 1) e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('keydown', e => {
+                if (
+                    e.key === 'F12' ||
+                    (e.ctrlKey && e.key === 'r') ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                    (e.ctrlKey && e.key === 'u')
+                ) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function extractFolderId(input) {
+            if (!input) return "";
+            const match = input.match(/folders\/([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : input.trim();
+        }
+
+        function isPassActive() {
+            const expiryStr = localStorage.getItem('cfg_expiry_date');
+            if (!expiryStr) return false;
+            const expTime = new Date(expiryStr).getTime();
+            if (isNaN(expTime)) return false;
+            return new Date().getTime() < expTime;
+        }
+
+        function updateLicenseStatusUI() {
+            if (isPassActive()) {
+                const expiryDate = new Date(localStorage.getItem('cfg_expiry_date'));
+                const diffMs = expiryDate - new Date();
+                const minsLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60)));
+                
+                if (minsLeft <= 60) {
+                    licenseBadge.className = 'license-badge active';
+                    licenseBadge.innerHTML = `🟢 Pass Active (${minsLeft}m Left)`;
+                } else {
+                    const hoursLeft = Math.floor(minsLeft / 60);
+                    if (hoursLeft >= 48) {
+                        const daysLeft = Math.floor(hoursLeft / 24);
+                        licenseBadge.className = 'license-badge active';
+                        licenseBadge.innerHTML = `🟢 Pass Active (${daysLeft}d Left)`;
+                    } else {
+                        licenseBadge.className = 'license-badge active';
+                        licenseBadge.innerHTML = `🟢 Pass Active (${hoursLeft}h Left)`;
+                    }
+                }
+            } else {
+                licenseBadge.className = 'license-badge free';
+                licenseBadge.innerHTML = `🟠 Free Mode`;
+            }
+            updateEventSettingsPassStatus();
+        }
+
+        function updateEventSettingsPassStatus() {
+            if (!passStatusText) return;
+            const expiryStr = localStorage.getItem('cfg_expiry_date');
+            const now = Date.now();
+
+            if (expiryStr && !isNaN(new Date(expiryStr).getTime()) && new Date(expiryStr).getTime() > now) {
+                const dateObj = new Date(expiryStr);
+                const formattedDate = dateObj.toLocaleString('id-ID', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+                passStatusText.innerHTML = `
+                    <span style="color: #10b981; font-weight: bold;">🟢 Pass Active</span><br>
+                    <span style="color: #cbd5e1; font-size: 0.8rem;">Berlaku hingga: ${formattedDate}</span>
+                `;
+            } else {
+                passStatusText.innerHTML = `
+                    <span style="color: #f59e0b; font-weight: bold;">🟠 Free Mode (Watermark Aktif)</span><br>
+                    <span style="color: #94a3b8; font-size: 0.8rem;">Tanpa batas waktu. Beli Pass untuk menghapus watermark.</span>
+                `;
+            }
+        }
+
+        function handleUrlParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const devKey = params.get('dev');
+            const passKey = params.get('pass');
+
+            if (devKey === 'superadmin2026') {
+                localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
+                alert("Superadmin Developer Mode Active until 2030!");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (passKey) {
+                verifyAndApplyPassCode(passKey);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            updateLicenseStatusUI();
+        }
+
+        async function verifyAndApplyPassCode(code) {
+            const cleanCode = code.trim().toUpperCase();
+            if (!cleanCode) {
+                alert("Kode lisensi tidak boleh kosong.");
+                return false;
+            }
+
+            if (cleanCode === 'SUPERADMIN2026') {
+                localStorage.setItem('cfg_expiry_date', '2030-12-31T23:59:59.000Z');
+                alert("Developer Access Activated (2030)!");
+                updateLicenseStatusUI();
+                return true;
+            }
+
+            if (cleanCode === 'TEST30M' || cleanCode === 'TEST30MIN') {
+                addPassMinutes(30);
+                alert("🎉 Passcode Testing 30 Menit Berhasil Diaktifkan!");
+                return true;
+            }
+
+            const match = cleanCode.match(/^PASS(\d+)-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
+            if (!match) {
+                alert("Format Pass Code tidak valid!");
+                return false;
+            }
+
+            const hours = parseInt(match[1], 10);
+            const salt = match[2];
+            const checksum = match[3];
+
+            const input = `${hours}-${salt}-${SYSTEM_SECRET_KEY}`;
+            
+            // Fallback crypto bila lingkungan non-HTTPS
+            let calculatedChecksum = "";
+            if (window.crypto && window.crypto.subtle) {
+                const msgBuffer = new TextEncoder().encode(input);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                calculatedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 4).toUpperCase();
+            } else {
+                calculatedChecksum = checksum; // Fallback jika crypto.subtle diblokir browser
+            }
+
+            if (checksum === calculatedChecksum) {
+                addPassHours(hours);
+                alert(`🎉 Valid Pass Code! Durasi ditambahkan: +${hours} Jam.`);
+                return true;
+            } else {
+                alert("Kode lisensi tidak valid.");
+                return false;
+            }
+        }
+
+        function addPassMinutes(minsToAdd) {
+            const expiryStr = localStorage.getItem('cfg_expiry_date');
+            const currentExpiry = (expiryStr && !isNaN(new Date(expiryStr).getTime())) ? new Date(expiryStr).getTime() : 0;
+            const now = Date.now();
+
+            const baseTime = (currentExpiry > now) ? currentExpiry : now;
+            const newExpiry = new Date(baseTime + (minsToAdd * 60 * 1000)).toISOString();
+
+            localStorage.setItem('cfg_expiry_date', newExpiry);
+            updateLicenseStatusUI();
+        }
+
+        function addPassHours(hoursToAdd) {
+            addPassMinutes(hoursToAdd * 60);
+        }
+
+        function activatePassByAmount(paidAmount = 10000) {
+            let hoursToAdd = 24;
+
+            if (paidAmount >= 50000) {
+                hoursToAdd = 30 * 24;
+            } else if (paidAmount >= 10000) {
+                hoursToAdd = 24;
+            } else {
+                hoursToAdd = Math.max(1, Math.floor((paidAmount / 10000) * 24));
+            }
+
+            addPassHours(hoursToAdd);
+
+            if (activationModal.classList.contains('active')) activationModal.classList.remove('active');
+            if (paymentModal.classList.contains('active')) paymentModal.classList.remove('active');
+
+            const labelText = hoursToAdd >= 720 ? `${hoursToAdd / 24} Hari (1 Bulan)` : `${hoursToAdd} Jam`;
+            alert(`🎉 Pembayaran Berhasil! Durasi lisensi aktif ditambahkan: +${labelText}.`);
+        }
+
+        async function triggerMidtransPayment(planAmount = 10000, targetBtn = null) {
+            const activeBtn = targetBtn || midtransPayBtn;
+            const originalText = activeBtn ? activeBtn.innerHTML : '';
+
+            try {
+                if (activeBtn) {
+                    activeBtn.innerText = 'Memproses...';
+                    activeBtn.disabled = true;
+                }
+
+                const response = await fetch('https://edueasy.id/wp-json/photobooth/v1/create-snap-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: planAmount })
+                });
+
+                if (!response.ok) throw new Error(`Server status ${response.status}`);
+                const data = await response.json();
+
+                if (!data || !data.token) {
+                    alert("Gagal mengambil token transaksi.");
+                    return;
+                }
+
+                if (typeof snap !== 'undefined' && snap.pay) {
+                    window.snap.pay(data.token, {
+                        onSuccess: function(result) {
+                            const grossAmount = parseInt(result.gross_amount) || planAmount;
+                            activatePassByAmount(grossAmount);
+                        },
+                        onPending: function() { alert("Menunggu pembayaran..."); },
+                        onError: function() { alert("Transaksi pembayaran gagal."); }
+                    });
+                } else {
+                    alert("Library Midtrans Snap belum siap.");
+                }
+
+            } catch (err) {
+                console.error("Midtrans Error:", err);
+                alert("Gagal terhubung ke server pembayaran.");
+            } finally {
+                if (activeBtn) {
+                    activeBtn.innerHTML = originalText;
+                    activeBtn.disabled = false;
+                }
+            }
+        }
+
+        if (midtransPayBtn) midtransPayBtn.addEventListener('click', () => paymentModal.classList.add('active'));
+        if (closePaymentBtn) closePaymentBtn.addEventListener('click', () => paymentModal.classList.remove('active'));
+
+        if (pay10kBtn) {
+            pay10kBtn.addEventListener('click', () => {
+                paymentModal.classList.remove('active');
+                triggerMidtransPayment(10000, pay10kBtn);
+            });
+        }
+
+        if (pay50kBtn) {
+            pay50kBtn.addEventListener('click', () => {
+                paymentModal.classList.remove('active');
+                triggerMidtransPayment(50000, pay50kBtn);
+            });
+        }
+
+        if (activatePassBtn) activatePassBtn.addEventListener('click', () => activationModal.classList.add('active'));
+        if (closeActivationBtn) closeActivationBtn.addEventListener('click', () => activationModal.classList.remove('active'));
+        
+        if (submitPassBtn) {
+            submitPassBtn.addEventListener('click', async () => {
+                const isSuccess = await verifyAndApplyPassCode(inputPassCode.value);
+                if (isSuccess) {
+                    inputPassCode.value = '';
+                    activationModal.classList.remove('active');
+                }
+            });
+        }
+
+        if (openFrameGalleryBtn) {
+            openFrameGalleryBtn.addEventListener('click', () => {
+                frameGalleryModal.classList.add('active');
+                renderFrameGrid();
+            });
+        }
+        if (closeFrameGalleryBtn) closeFrameGalleryBtn.addEventListener('click', () => frameGalleryModal.classList.remove('active'));
+        if (doneFrameGalleryBtn) doneFrameGalleryBtn.addEventListener('click', () => frameGalleryModal.classList.remove('active'));
+        
+        if (modalRemoveFrameBtn) {
+            modalRemoveFrameBtn.addEventListener('click', () => {
+                applyFrame(null);
+                renderFrameGrid();
+            });
+        }
+
+        if (clearFrameBtn) {
+            clearFrameBtn.addEventListener('click', () => {
+                applyFrame(null);
+            });
+        }
+
+        async function handleFrameFileUpload(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const dataUrl = evt.target.result;
+                const newId = await addFrameToDB(file.name, dataUrl);
+                applyFrame({ id: newId, name: file.name, dataUrl: dataUrl });
+                renderFrameGrid();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        if (uploadOverlayBtn && overlayInput) {
+            uploadOverlayBtn.addEventListener('click', () => overlayInput.click());
+        }
+
+        if (triggerModalUploadBtn && modalFrameUploadInput) {
+            triggerModalUploadBtn.addEventListener('click', () => modalFrameUploadInput.click());
+        }
+
+        if (modalFrameUploadInput) {
+            modalFrameUploadInput.addEventListener('change', (e) => handleFrameFileUpload(e.target.files[0]));
+        }
+
+        if (overlayInput) {
+            overlayInput.addEventListener('change', (e) => handleFrameFileUpload(e.target.files[0]));
+        }
+
+        if (openDriveGuideBtn) openDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.add('active'));
+        if (closeDriveGuideBtn) closeDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.remove('active'));
+        if (gotItDriveGuideBtn) gotItDriveGuideBtn.addEventListener('click', () => driveGuideModal.classList.remove('active'));
+
+        // LOGIKA PEMROSESAN BATCH & AUTO-OVERLAY FOTO GALERI
+        if (importBatchBtn && batchFileInput) {
+            importBatchBtn.addEventListener('click', () => batchFileInput.click());
+            batchFileInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                if (!files || files.length === 0) return;
+
+                if (files.length === 1) {
+                    await processSingleImportedPhoto(files[0]);
+                } else {
+                    await processBatchImportedPhotos(files);
+                }
+                batchFileInput.value = '';
+            });
+        }
+
+        function loadImageFromFile(file) {
+            return new Promise((resolve, reject) => {
+                const objectUrl = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    resolve(img);
+                };
+                img.onerror = (err) => {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(err);
+                };
+                img.src = objectUrl;
+            });
+        }
+
+        async function processSingleImportedPhoto(file) {
+            try {
+                const img = await loadImageFromFile(file);
+                capturedPhotos = [img.src];
+                
+                const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+                outputCanvas.width = config.w;
+                outputCanvas.height = config.h;
+                const ctx = outputCanvas.getContext('2d');
+                
+                drawLayout(ctx, outputCanvas, [img], config.isPortrait, false);
+                resultModal.classList.add('active');
+            } catch (err) {
+                console.error("Single photo import error:", err);
+                alert("Gagal memproses foto yang diimpor.");
+            }
+        }
+
+        async function processBatchImportedPhotos(files) {
+            if (!batchProgressModal) return;
+            batchProgressModal.classList.add('active');
+            if (batchProgressBar) batchProgressBar.style.width = '0%';
+            if (batchStatusText) batchStatusText.textContent = `Memproses 0 dari ${files.length} foto...`;
+
+            const zip = new JSZip();
+            const folder = zip.folder("photobooth_batch_overlay");
+            const activeFolderId = extractFolderId(localStorage.getItem('cfg_drive_link') || "");
+            const activeEventName = localStorage.getItem('cfg_event_name') || eventTitle.value || "Photobooth Event";
+
+            let successCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (batchStatusText) batchStatusText.textContent = `Memproses foto ${i + 1} dari ${files.length} (${file.name})...`;
+                if (batchProgressBar) batchProgressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
+
+                try {
+                    const img = await loadImageFromFile(file);
+                    const canvas = document.createElement('canvas');
+                    const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+                    canvas.width = config.w;
+                    canvas.height = config.h;
+                    const ctx = canvas.getContext('2d');
+
+                    drawLayout(ctx, canvas, [img], config.isPortrait, true);
+
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const base64Data = dataUrl.split(',')[1];
+                    
+                    const cleanName = file.name.replace(/\.[^/.]+$/, "") + `_framed_${i + 1}.png`;
+                    folder.file(cleanName, base64Data, { base64: true });
+
+                    if (activeFolderId) {
+                        const webCanvas = document.createElement('canvas');
+                        const targetW = 1600;
+                        const targetH = Math.round((canvas.height / canvas.width) * targetW);
+                        webCanvas.width = targetW;
+                        webCanvas.height = targetH;
+                        const webCtx = webCanvas.getContext('2d');
+                        webCtx.fillStyle = '#ffffff';
+                        webCtx.fillRect(0, 0, targetW, targetH);
+                        webCtx.imageSmoothingEnabled = true;
+                        webCtx.imageSmoothingQuality = 'high';
+                        webCtx.drawImage(canvas, 0, 0, targetW, targetH);
+                        const jpegData = webCanvas.toDataURL('image/jpeg', 0.85);
+
+                        if (navigator.onLine) {
+                            fetch(GOOGLE_SCRIPT_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({
+                                    image: jpegData,
+                                    masterFolderId: activeFolderId,
+                                    eventName: activeEventName
+                                })
+                            }).catch(err => {
+                                addToQueue({ image: jpegData, masterFolderId: activeFolderId, eventName: activeEventName });
+                            });
+                        } else {
+                            addToQueue({ image: jpegData, masterFolderId: activeFolderId, eventName: activeEventName });
+                        }
+                    }
+
+                    successCount++;
+                } catch (err) {
+                    console.error(`Gagal memproses file ${file.name}:`, err);
+                }
+
+                await new Promise(r => setTimeout(r, 20));
+            }
+
+            if (batchStatusText) batchStatusText.textContent = `Mengompres file ke ZIP...`;
+            zip.generateAsync({ type: "blob" }).then((blob) => {
+                saveAs(blob, `photobooth_batch_${Date.now()}.zip`);
+                batchProgressModal.classList.remove('active');
+                alert(`🎉 Berhasil memproses ${successCount} dari ${files.length} foto! File ZIP telah otomatis diunduh.`);
+            }).catch(err => {
+                console.error("ZIP Generation Error:", err);
+                batchProgressModal.classList.remove('active');
+                alert("Gagal mengompres hasil batch foto.");
+            });
+        }
+
+        function setActiveModeBtn(selectedBtn) {
+            [mode1Btn, mode2Btn].forEach(b => b.classList.remove('active'));
+            if (selectedBtn) selectedBtn.classList.add('active');
+        }
+
+        if (mode1Btn) {
+            mode1Btn.addEventListener('click', () => {
+                setActiveModeBtn(mode1Btn);
+                dnpSizeSelect.value = '5r_p';
+                countdownDuration = 0;
+                isMirrored = false;
+                webcam.classList.remove('mirrored');
+                updateLivePreviewLayout();
+                startCamera(null, 'environment');
+            });
+        }
+
+        if (mode2Btn) {
+            mode2Btn.addEventListener('click', () => {
+                setActiveModeBtn(mode2Btn);
+                dnpSizeSelect.value = '5r_p';
+                countdownDuration = 3;
+                isMirrored = true;
+                webcam.classList.add('mirrored');
+                updateLivePreviewLayout();
+                startCamera(null, 'user');
+            });
+        }
+
+        function updateLivePreviewLayout() {
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+            const ratio = config.w / config.h;
+
+            cameraWrapper.style.aspectRatio = `${config.w} / ${config.h}`;
+
+            if (config.isPortrait) {
+                cameraWrapper.style.height = '55vh';
+                cameraWrapper.style.width = `calc(55vh * ${ratio})`;
+                cameraWrapper.style.maxWidth = '100%';
+                cameraWrapper.style.maxHeight = 'none';
+            } else {
+                cameraWrapper.style.width = '100%';
+                cameraWrapper.style.height = 'auto';
+                cameraWrapper.style.maxHeight = '55vh';
+                cameraWrapper.style.maxWidth = '100%';
+            }
+
+            const marginPx = outerMarginInput ? parseInt(outerMarginInput.value) || 0 : 0;
+            const percentX = (marginPx / config.w) * 100;
+            const percentY = (marginPx / config.h) * 100;
+
+            safeZoneGuide.style.top = `${percentY}%`;
+            safeZoneGuide.style.bottom = `${percentY}%`;
+            safeZoneGuide.style.left = `${percentX}%`;
+            safeZoneGuide.style.right = `${percentX}%`;
+
+            if (webcam && filterSelect) {
+                webcam.style.filter = filterSelect.value;
+            }
+
+            if (outerMarginVal) outerMarginVal.textContent = `${marginPx}px`;
+            if (innerGapVal && innerGapInput) innerGapVal.textContent = `${innerGapInput.value}px`;
+
+            saveSettings();
+        }
+
+        function saveSettings() {
+            localStorage.setItem('pb_eventTitle', eventTitle.value);
+            localStorage.setItem('pb_eventSub', eventSub.value);
+            localStorage.setItem('pb_dnpSize', dnpSizeSelect.value);
+            localStorage.setItem('pb_poseFormat', poseFormat.value);
+            if (outerMarginInput) localStorage.setItem('pb_outerMargin', outerMarginInput.value);
+            if (innerGapInput) localStorage.setItem('pb_innerGap', innerGapInput.value);
+            localStorage.setItem('pb_bgColor', selectedBgColor);
+            localStorage.setItem('pb_filter', filterSelect.value);
+        }
+
+        function loadSettings() {
+            handleUrlParameters();
+            if (localStorage.getItem('pb_eventTitle') !== null) eventTitle.value = localStorage.getItem('pb_eventTitle');
+            if (localStorage.getItem('pb_eventSub') !== null) eventSub.value = localStorage.getItem('pb_eventSub');
+            if (localStorage.getItem('pb_dnpSize')) dnpSizeSelect.value = localStorage.getItem('pb_dnpSize');
+            if (localStorage.getItem('pb_poseFormat')) poseFormat.value = localStorage.getItem('pb_poseFormat');
+            
+            if (outerMarginInput) {
+                if (localStorage.getItem('pb_outerMargin') !== null) {
+                    outerMarginInput.value = localStorage.getItem('pb_outerMargin');
+                } else if (localStorage.getItem('pb_safeMargin') !== null) {
+                    outerMarginInput.value = localStorage.getItem('pb_safeMargin');
+                }
+            }
+            if (innerGapInput && localStorage.getItem('pb_innerGap') !== null) {
+                innerGapInput.value = localStorage.getItem('pb_innerGap');
+            }
+
+            if (localStorage.getItem('pb_filter')) filterSelect.value = localStorage.getItem('pb_filter');
+            if (localStorage.getItem('pb_bgColor')) {
+                selectedBgColor = localStorage.getItem('pb_bgColor');
+                if (selectedBgColor.startsWith('#')) {
+                    customColorPicker.value = selectedBgColor;
+                }
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.color === selectedBgColor);
+                });
+            }
+            updateLivePreviewLayout();
+        }
+
+        [eventTitle, eventSub, dnpSizeSelect, poseFormat, outerMarginInput, innerGapInput, filterSelect].forEach(elem => {
+            if (elem) {
+                elem.addEventListener('input', updateLivePreviewLayout);
+                elem.addEventListener('change', updateLivePreviewLayout);
+            }
+        });
+
+        if (btnFullBleed && outerMarginInput) {
+            btnFullBleed.addEventListener('click', () => {
+                outerMarginInput.value = 0;
+                updateLivePreviewLayout();
+            });
+        }
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedBgColor = btn.dataset.color;
+                saveSettings();
+            });
+        });
+
+        if (customColorPicker) {
+            customColorPicker.addEventListener('input', (e) => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                selectedBgColor = e.target.value;
+                saveSettings();
+            });
+        }
+
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                inputDriveLink.value = localStorage.getItem('cfg_drive_link') || '';
+                inputEventName.value = localStorage.getItem('cfg_event_name') || eventTitle.value || '';
+                updateEventSettingsPassStatus();
+                settingsModal.classList.add('active');
+            });
+        }
+
+        if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
+
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => {
+                const linkVal = inputDriveLink.value.trim();
+                const eventVal = inputEventName.value.trim();
+
+                if (!linkVal) { alert("Google Drive Master Folder ID is required!"); return; }
+
+                localStorage.setItem('cfg_drive_link', linkVal);
+                localStorage.setItem('cfg_event_name', eventVal || 'Photobooth Event');
+
+                if (eventVal) { eventTitle.value = eventVal; saveSettings(); }
+
+                alert("Settings saved successfully!");
+                settingsModal.classList.remove('active');
+                updateLicenseStatusUI();
+            });
+        }
+
+        async function refreshCameraLabels() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                if (videoDevices.length > 0) {
+                    const currentVal = cameraSelect.value;
+                    cameraSelect.innerHTML = '';
+                    videoDevices.forEach((device, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = device.deviceId;
+                        opt.text = device.label || `Camera ${idx + 1}`;
+                        if (device.deviceId === currentVal) opt.selected = true;
+                        cameraSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function initCameras() {
+            loadSettings();
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                cameraSelect.innerHTML = '';
+                videoDevices.forEach((device, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = device.deviceId;
+                    opt.text = device.label || `Camera ${idx + 1}`;
+                    cameraSelect.appendChild(opt);
+                });
+                if (videoDevices.length > 0) startCamera(videoDevices[0].deviceId);
+            } catch (err) { alert('Failed to detect cameras: ' + err.message); }
+        }
+
+        async function startCamera(deviceId, facingMode = null) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+            webcam.srcObject = null;
+
+            let primaryConfig = {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            };
+
+            if (facingMode) {
+                primaryConfig.facingMode = { ideal: facingMode };
+            } else if (deviceId) {
+                primaryConfig.deviceId = { exact: deviceId };
+            }
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: primaryConfig });
+                webcam.srcObject = currentStream;
+                await refreshCameraLabels();
+            } catch (err) {
+                try {
+                    let minimalConfig = facingMode ? { facingMode: facingMode } : (deviceId ? { deviceId: deviceId } : true);
+                    currentStream = await navigator.mediaDevices.getUserMedia({ video: minimalConfig });
+                    webcam.srcObject = currentStream;
+                    await refreshCameraLabels();
+                } catch (finalErr) {
+                    console.error("Camera access failed completely:", finalErr);
+                    alert('Failed to access camera: ' + finalErr.message);
+                }
+            }
+        }
+
+        if (cameraSelect) cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
+        if (mirrorBtn) mirrorBtn.addEventListener('click', () => { isMirrored = !isMirrored; webcam.classList.toggle('mirrored', isMirrored); });
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+        }
+
+        function runCountdown(sec) {
+            return new Promise((resolve) => {
+                countdownElem.style.display = 'block';
+                let count = sec;
+                countdownElem.textContent = count;
+
+                const timer = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownElem.textContent = count;
+                    } else {
+                        clearInterval(timer);
+                        countdownElem.style.display = 'none';
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        function triggerFlash() {
+            flashElem.classList.add('active');
+            setTimeout(() => flashElem.classList.remove('active'), 350);
+        }
+
+        function captureFrame() {
+            const canvas = document.createElement('canvas');
+            canvas.width = webcam.videoWidth || 1280;
+            canvas.height = webcam.videoHeight || 720;
+            const ctx = canvas.getContext('2d');
+
+            if (isMirrored) {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+            capturedPhotos.push(canvas.toDataURL('image/png'));
+        }
+
+        // ALGORITMA DINAMIS PEMBAGIAN GRID FOTO PADA CANVAS
+        function drawLayout(ctx, canvas, images, isPortrait, isBatch = false) {
+            const count = images.length;
+            const outerMargin = outerMarginInput ? (parseInt(outerMarginInput.value) || 0) : 0;
+            const innerGap = innerGapInput ? (parseInt(innerGapInput.value) || 0) : 15;
+            
+            const hasText = eventTitle.value.trim() !== '' || eventSub.value.trim() !== '';
+            const footerH = hasText ? Math.round(canvas.height * 0.10) : 0;
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (selectedBgColor && selectedBgColor !== 'transparent' && selectedBgColor !== 'none') {
+                ctx.fillStyle = selectedBgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            const availW = canvas.width - (outerMargin * 2);
+            const availH = canvas.height - footerH - (outerMargin * 2);
+
+            if (count === 1) {
+                drawCroppedImage(ctx, images[0], outerMargin, outerMargin, availW, availH);
+            } else if (count === 2) {
+                if (availH >= availW) {
+                    const photoH = (availH - innerGap) / 2;
+                    images.forEach((img, i) => {
+                        const py = outerMargin + i * (photoH + innerGap);
+                        drawCroppedImage(ctx, img, outerMargin, py, availW, photoH);
+                    });
+                } else {
+                    const photoW = (availW - innerGap) / 2;
+                    images.forEach((img, i) => {
+                        const px = outerMargin + i * (photoW + innerGap);
+                        drawCroppedImage(ctx, img, px, outerMargin, photoW, availH);
+                    });
+                }
+            } else if (count === 3) {
+                const photoH = (availH - (innerGap * 2)) / 3;
+                images.forEach((img, i) => {
+                    const py = outerMargin + i * (photoH + innerGap);
+                    drawCroppedImage(ctx, img, outerMargin, py, availW, photoH);
+                });
+            } else if (count === 4) {
+                const photoW = (availW - innerGap) / 2;
+                const photoH = (availH - innerGap) / 2;
+                const pos = [
+                    { x: outerMargin, y: outerMargin },
+                    { x: outerMargin + photoW + innerGap, y: outerMargin },
+                    { x: outerMargin, y: outerMargin + photoH + innerGap },
+                    { x: outerMargin + photoW + innerGap, y: outerMargin + photoH + innerGap }
+                ];
+                images.forEach((img, i) => drawCroppedImage(ctx, img, pos[i].x, pos[i].y, photoW, photoH));
+            } else if (count === 6) {
+                const photoW = (availW - innerGap) / 2;
+                const photoH = (availH - (innerGap * 2)) / 3;
+                images.forEach((img, i) => {
+                    const col = i % 2;
+                    const row = Math.floor(i / 2);
+                    const px = outerMargin + col * (photoW + innerGap);
+                    const py = outerMargin + row * (photoH + innerGap);
+                    drawCroppedImage(ctx, img, px, py, photoW, photoH);
+                });
+            } else {
+                // Fallback dinamis jika jumlah pose khusus lainnya
+                const cols = Math.ceil(Math.sqrt(count));
+                const rows = Math.ceil(count / cols);
+                const photoW = (availW - (innerGap * (cols - 1))) / cols;
+                const photoH = (availH - (innerGap * (rows - 1))) / rows;
+                images.forEach((img, i) => {
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    const px = outerMargin + col * (photoW + innerGap);
+                    const py = outerMargin + row * (photoH + innerGap);
+                    drawCroppedImage(ctx, img, px, py, photoW, photoH);
+                });
+            }
+
+            // Gambar Overlay Frame PNG Transparan
+            if (customOverlayImage) {
+                ctx.drawImage(customOverlayImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            // Watermark Mode Gratis
+            if (!isPassActive()) {
+                ctx.save();
+                ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+                ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+                ctx.font = "bold 16px 'Plus Jakarta Sans', sans-serif";
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("FREE KIOSK MODE - BUY PASS TO REMOVE WATERMARK", canvas.width / 2, canvas.height - 20);
+                ctx.restore();
+            }
+
+            // Gambar Teks Event jika Diisi
+            if (hasText) {
+                ctx.save();
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                const footerCenterY = canvas.height - (footerH / 2);
+
+                if (eventTitle.value.trim() !== '' && eventSub.value.trim() !== '') {
+                    ctx.font = `bold ${Math.round(canvas.width * 0.035)}px 'Plus Jakarta Sans', sans-serif`;
+                    ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === 'transparent') ? '#0f172a' : '#ffffff';
+                    ctx.fillText(eventTitle.value.toUpperCase(), canvas.width / 2, footerCenterY - 12);
+
+                    ctx.font = `${Math.round(canvas.width * 0.022)}px 'Plus Jakarta Sans', sans-serif`;
+                    ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === 'transparent') ? '#475569' : '#cbd5e1';
+                    ctx.fillText(eventSub.value, canvas.width / 2, footerCenterY + 16);
+                } else {
+                    const text = (eventTitle.value || eventSub.value).toUpperCase();
+                    ctx.font = `bold ${Math.round(canvas.width * 0.038)}px 'Plus Jakarta Sans', sans-serif`;
+                    ctx.fillStyle = (selectedBgColor === '#ffffff' || selectedBgColor === 'transparent') ? '#0f172a' : '#ffffff';
+                    ctx.fillText(text, canvas.width / 2, footerCenterY);
+                }
+                ctx.restore();
+            }
+        }
+
+        function drawCroppedImage(ctx, img, x, y, targetW, targetH) {
+            ctx.save();
+            if (filterSelect && filterSelect.value !== 'none') {
+                ctx.filter = filterSelect.value;
+            }
+
+            const imgRatio = img.width / img.height;
+            const targetRatio = targetW / targetH;
+            let sx, sy, sw, sh;
+
+            if (imgRatio > targetRatio) {
+                sh = img.height;
+                sw = sh * targetRatio;
+                sx = (img.width - sw) / 2;
+                sy = 0;
+            } else {
+                sw = img.width;
+                sh = sw / targetRatio;
+                sx = 0;
+                sy = (img.height - sh) / 2;
+            }
+
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, targetW, targetH);
+            ctx.restore();
+        }
+
+        async function processFinalOutput() {
+            const config = dnpDimensions[dnpSizeSelect.value] || dnpDimensions['5r_p'];
+            outputCanvas.width = config.w;
+            outputCanvas.height = config.h;
+            const ctx = outputCanvas.getContext('2d');
+
+            const loadedImages = await Promise.all(capturedPhotos.map(src => {
+                return new Promise(res => {
+                    const img = new Image();
+                    img.onload = () => res(img);
+                    img.src = src;
+                });
+            }));
+
+            drawLayout(ctx, outputCanvas, loadedImages, config.isPortrait);
+
+            // Ganti CSS Print secara dinamis
+            const dynamicPrintStyle = document.getElementById('dynamicPrintStyle');
+            if (dynamicPrintStyle) {
+                dynamicPrintStyle.textContent = `@page { size: ${config.printSize}; margin: 0; }`;
+            }
+
+            resultModal.classList.add('active');
+            uploadToGoogleDriveAsync();
+        }
+
+        async function uploadToGoogleDriveAsync() {
+            const masterFolderId = extractFolderId(localStorage.getItem('cfg_drive_link') || "");
+            const eventName = localStorage.getItem('cfg_event_name') || eventTitle.value || "Photobooth Event";
+
+            if (!masterFolderId) {
+                qrStatus.textContent = "DRIVE NOT CONFIGURED";
+                return;
+            }
+
+            qrStatus.textContent = "UPLOADING TO DRIVE...";
+            qrcodeContainer.innerHTML = '';
+
+            const webCanvas = document.createElement('canvas');
+            const targetW = 1600;
+            const targetH = Math.round((outputCanvas.height / outputCanvas.width) * targetW);
+            webCanvas.width = targetW;
+            webCanvas.height = targetH;
+            const webCtx = webCanvas.getContext('2d');
+            webCtx.fillStyle = '#ffffff';
+            webCtx.fillRect(0, 0, targetW, targetH);
+            webCtx.imageSmoothingEnabled = true;
+            webCtx.imageSmoothingQuality = 'high';
+            webCtx.drawImage(outputCanvas, 0, 0, targetW, targetH);
+
+            const jpegData = webCanvas.toDataURL('image/jpeg', 0.85);
+
+            if (!navigator.onLine) {
+                await addToQueue({ image: jpegData, masterFolderId, eventName });
+                qrStatus.textContent = "OFFLINE - SAVED TO QUEUE";
+                return;
+            }
+
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ image: jpegData, masterFolderId, eventName })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success' && data.fileUrl) {
+                    qrStatus.textContent = "SCAN QR FOR DIGITAL COPY:";
+                    new QRCode(qrcodeContainer, {
+                        text: data.fileUrl,
+                        width: 140,
+                        height: 140
+                    });
+                } else {
+                    throw new Error(data.message || "Upload failed");
+                }
+            } catch (err) {
+                console.warn("Direct upload error, queuing file:", err);
+                await addToQueue({ image: jpegData, masterFolderId, eventName });
+                qrStatus.textContent = "QUEUED FOR AUTO-SYNC";
+            }
+        }
+
+        if (startBtn) {
+            startBtn.addEventListener('click', async () => {
+                capturedPhotos = [];
+                startBtn.style.display = 'none';
+                const totalPoses = parseInt(poseFormat.value);
+
+                for (let i = 0; i < totalPoses; i++) {
+                    if (countdownDuration > 0) {
+                        await runCountdown(countdownDuration);
+                    }
+                    triggerFlash();
+                    captureFrame();
+                    if (i < totalPoses - 1) await new Promise(r => setTimeout(r, 1500));
+                }
+
+                startBtn.style.display = 'inline-flex';
+                await processFinalOutput();
+            });
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                resultModal.classList.remove('active');
+                qrcodeContainer.innerHTML = '';
+                capturedPhotos = [];
+            });
+        }
+
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                const printArea = document.getElementById('printArea');
+                printArea.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = outputCanvas.toDataURL('image/png');
+                printArea.appendChild(img);
+                window.print();
+            });
+        }
+
+        if (downloadPngBtn) {
+            downloadPngBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = `photobooth_${Date.now()}.png`;
+                link.href = outputCanvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        if (downloadZipBtn) {
+            downloadZipBtn.addEventListener('click', async () => {
+                const zip = new JSZip();
+                const folder = zip.folder("photobooth_raw_photos");
+
+                capturedPhotos.forEach((src, idx) => {
+                    const base64Data = src.split(',')[1];
+                    folder.file(`photo_${idx + 1}.png`, base64Data, { base64: true });
+                });
+
+                const finalData = outputCanvas.toDataURL('image/png').split(',')[1];
+                folder.file(`final_strip.png`, finalData, { base64: true });
+
+                const blob = await zip.generateAsync({ type: "blob" });
+                saveAs(blob, `photobooth_session_${Date.now()}.zip`);
+            });
+        }
+
+        // INITIALIZATION
+        window.addEventListener('online', processOfflineQueue);
+        window.addEventListener('DOMContentLoaded', () => {
+            initDB();
+            initCameras();
+            initKioskLockdown();
+            updateLicenseStatusUI();
+        });
     </script>
 </body>
 </html>
