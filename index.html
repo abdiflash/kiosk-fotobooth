@@ -476,7 +476,6 @@
             padding: 0 !important;
         }
         body.visitor-mode .camera-wrapper {
-            max-height: 80vh !important;
             border-radius: 16px !important;
         }
         body.visitor-mode .btn-capture {
@@ -1879,16 +1878,30 @@
 
             cameraWrapper.style.aspectRatio = `${targetRatio}`;
 
-            if (targetRatio < 1) {
-                cameraWrapper.style.height = document.body.classList.contains('visitor-mode') ? '75vh' : '55vh';
-                cameraWrapper.style.width = `calc(${cameraWrapper.style.height} * ${targetRatio})`;
-                cameraWrapper.style.maxWidth = '100%';
-                cameraWrapper.style.maxHeight = 'none';
+            if (document.body.classList.contains('visitor-mode')) {
+                if (targetRatio < 1) {
+                    cameraWrapper.style.height = '70vh';
+                    cameraWrapper.style.width = 'auto';
+                    cameraWrapper.style.maxWidth = '90vw';
+                    cameraWrapper.style.maxHeight = '70vh';
+                } else {
+                    cameraWrapper.style.width = '85vw';
+                    cameraWrapper.style.height = 'auto';
+                    cameraWrapper.style.maxWidth = '1000px';
+                    cameraWrapper.style.maxHeight = '65vh';
+                }
             } else {
-                cameraWrapper.style.width = document.body.classList.contains('visitor-mode') ? '85vw' : '100%';
-                cameraWrapper.style.maxWidth = '750px';
-                cameraWrapper.style.height = `calc(${cameraWrapper.style.width} / ${targetRatio})`;
-                cameraWrapper.style.maxHeight = '55vh';
+                if (targetRatio < 1) {
+                    cameraWrapper.style.height = '50vh';
+                    cameraWrapper.style.width = 'auto';
+                    cameraWrapper.style.maxWidth = '100%';
+                    cameraWrapper.style.maxHeight = '50vh';
+                } else {
+                    cameraWrapper.style.width = '100%';
+                    cameraWrapper.style.height = 'auto';
+                    cameraWrapper.style.maxWidth = '750px';
+                    cameraWrapper.style.maxHeight = '50vh';
+                }
             }
 
             const marginPx = outerMarginInput ? parseInt(outerMarginInput.value) || 0 : 0;
